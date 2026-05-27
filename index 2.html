@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eFootball Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e1a;--bg2:#111827;--card:#151d2e;--card2:#1a2338;--yellow:#f5c518;--green:#22c55e;--blue:#3b82f6;--purple:#7c3aed;--red:#ef4444;--orange:#f97316;--text:#e2e8f0;--muted:#64748b;--border:#1e2d45;}
+body.light{--bg:#f0f4ff;--bg2:#fff;--card:#fff;--card2:#f8faff;--text:#1a2338;--muted:#64748b;--border:#dde3f0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+
+/* LOADING */
+#loading-screen{position:fixed;inset:0;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .7s,visibility .7s;}
+#loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.load-ball{font-size:52px;animation:spin 1.8s linear infinite;margin-bottom:18px;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.load-logo{background:var(--yellow);border-radius:14px;padding:10px 28px;margin-bottom:8px;animation:logopulse 1.5s ease-in-out infinite;}
+.load-logo span{font-size:24px;font-weight:900;color:#111;letter-spacing:2px;}
+@keyframes logopulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(245,197,24,.4)}50%{transform:scale(1.05);box-shadow:0 0 0 16px rgba(245,197,24,0)}}
+.load-sub{color:#64748b;font-size:13px;margin-bottom:38px;}
+.load-bar-wrap{width:200px;height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.load-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--yellow),#f97316);border-radius:4px;animation:loadB 2.5s ease forwards;}
+@keyframes loadB{0%{width:0%}70%{width:85%}100%{width:100%}}
+.load-txt{font-size:12px;color:#64748b;animation:blink 1.2s ease infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;animation:confettiFall 3s ease-in forwards;z-index:9998;pointer-events:none;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* AUTH */
+#auth-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#0d1225;position:relative;overflow:hidden;}
+#auth-screen::before{content:'';position:absolute;width:360px;height:360px;border-radius:50%;border:65px solid rgba(180,20,20,.15);top:50%;left:50%;transform:translate(-50%,-52%) rotate(-20deg);}
+#auth-screen::after{content:'';position:absolute;width:230px;height:230px;border-radius:50%;border:42px solid rgba(180,20,20,.09);top:50%;left:50%;transform:translate(-50%,-52%) rotate(10deg);}
+.auth-logo-wrap{background:var(--yellow);border-radius:14px;padding:10px 28px;margin-bottom:8px;position:relative;z-index:1;}
+.auth-logo{font-size:26px;font-weight:900;color:#111;letter-spacing:2px;}
+.auth-tagline{color:#64748b;font-size:13px;margin-bottom:20px;position:relative;z-index:1;}
+.auth-box{background:#151d2e;border:1px solid #1e2d45;border-radius:18px;padding:22px 18px;width:100%;max-width:400px;position:relative;z-index:1;}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#111;font-weight:700;font-size:14px;padding:13px;border-radius:12px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;transition:box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.btn-google:hover{box-shadow:0 4px 18px rgba(0,0,0,.4);}
+.security-box{background:rgba(180,20,20,.08);border:1px solid rgba(180,20,20,.3);border-radius:12px;padding:12px 14px;font-size:12px;line-height:1.7;color:#e2e8f0;margin-top:12px;}
+.security-box .sec-title{color:var(--yellow);font-weight:700;margin-bottom:3px;}
+.security-box span{color:var(--yellow);font-weight:700;}
+.auth-divider{text-align:center;color:#64748b;font-size:12px;padding:4px 0;margin:14px 0;position:relative;}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:#1e2d45;}
+.auth-divider::before{right:0;}.auth-divider::after{left:0;}
+.auth-tab-btns{display:flex;gap:8px;margin-bottom:14px;}
+.auth-tab-btn{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;border:1px solid #1e2d45;background:#1a2338;color:#64748b;transition:all .2s;}
+.auth-tab-btn.active{background:var(--yellow);color:#000;border-color:var(--yellow);}
+.input-group{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.input-label{font-size:11px;color:#64748b;}
+.input-wrap{position:relative;}
+.input-field{background:#1a2338;border:1px solid #1e2d45;border-radius:10px;padding:11px 14px;font-family:'Cairo',sans-serif;font-size:13px;color:#e2e8f0;outline:none;width:100%;transition:border-color .2s;}
+.input-field:focus{border-color:var(--yellow);}
+.input-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;cursor:pointer;}
+.btn-auth{background:linear-gradient(135deg,var(--yellow),#f97316);color:#000;font-weight:900;font-size:15px;padding:13px;border-radius:10px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;margin-top:6px;transition:opacity .2s;}
+.btn-auth:hover{opacity:.88;}
+.forgot-link{font-size:11px;color:#64748b;cursor:pointer;text-align:right;margin-bottom:8px;}
+.auth-form{display:none;}.auth-form.active{display:block;}
+.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px;}
+.success-msg{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px;}
+.wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;font-weight:700;font-size:14px;padding:13px 24px;border-radius:12px;text-decoration:none;width:100%;max-width:400px;margin-top:14px;position:relative;z-index:1;box-shadow:0 4px 20px rgba(37,211,102,.25);transition:opacity .2s;}
+.wa-btn:hover{opacity:.9;}
+
+/* APP */
+#app-screen{display:none;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+.logo{font-weight:900;font-size:14px;letter-spacing:1px;}
+.logo span{color:var(--yellow);}
+.header-right{display:flex;align-items:center;gap:7px;}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:17px;position:relative;padding:3px;}
+.notif-badge{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.user-avatar{width:30px;height:30px;background:linear-gradient(135deg,var(--yellow),#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;font-weight:700;color:#000;}
+.pts-chip{background:rgba(245,197,24,.15);border:1px solid rgba(245,197,24,.3);color:var(--yellow);font-size:10px;font-weight:700;padding:3px 7px;border-radius:20px;}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:1;min-width:55px;padding:9px 2px;text-align:center;font-size:9px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .3s;white-space:nowrap;font-family:'Cairo',sans-serif;background:none;border-top:none;border-left:none;border-right:none;}
+.tab.active{color:var(--yellow);border-bottom-color:var(--yellow);}
+.tab-icon{font-size:14px;display:block;margin-bottom:1px;}
+main{padding:12px;max-width:480px;margin:0 auto;}
+.section{display:none;}
+.section.active{display:block;animation:fadeUp .35s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* COUNTDOWN */
+.countdown-card{background:linear-gradient(135deg,#1a1a3e,#2d1b69);border:1px solid rgba(124,58,237,.4);border-radius:16px;padding:16px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden;}
+.countdown-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(124,58,237,.2),transparent 60%);}
+.countdown-title{font-size:12px;color:#a78bfa;margin-bottom:3px;font-weight:600;}
+.countdown-tourney{font-size:15px;font-weight:900;margin-bottom:12px;color:#fff;}
+.countdown-boxes{display:flex;justify-content:center;gap:8px;}
+.cd-box{background:rgba(0,0,0,.3);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:8px 12px;min-width:54px;}
+.cd-num{font-size:26px;font-weight:900;color:var(--yellow);line-height:1;display:block;}
+.cd-label{font-size:9px;color:#a78bfa;margin-top:2px;display:block;}
+.cd-sep{font-size:22px;font-weight:900;color:rgba(124,58,237,.5);align-self:center;padding-bottom:12px;}
+
+/* RANK */
+.rank-banner{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+.rank-icon{font-size:34px;}
+.rank-info{flex:1;}
+.rank-title{font-size:14px;font-weight:700;}
+.rank-sub{font-size:11px;color:var(--muted);}
+.rank-bar{background:rgba(255,255,255,.08);border-radius:4px;height:5px;overflow:hidden;margin-top:5px;}
+.rank-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+.rank-pts-txt{font-size:10px;color:var(--muted);margin-top:3px;text-align:left;}
+
+/* MOTM */
+.motm-card{background:linear-gradient(135deg,#1a2a1a,#1e3a1e);border:1px solid rgba(34,197,94,.3);border-radius:14px;padding:14px;margin-bottom:12px;position:relative;overflow:hidden;}
+.motm-card::before{content:'⭐';position:absolute;font-size:80px;right:-10px;top:-10px;opacity:.07;}
+.motm-badge{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:6px;}
+
+/* PLAYER CARD */
+.player-card-wrap{background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(245,197,24,.3);border-radius:16px;padding:16px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden;}
+.player-card-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(245,197,24,.08),transparent 60%);}
+.pc-avatar{width:70px;height:70px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#000;background:linear-gradient(135deg,var(--yellow),#f97316);border:3px solid rgba(245,197,24,.5);position:relative;z-index:1;}
+.pc-name{font-size:16px;font-weight:900;color:var(--yellow);margin-bottom:2px;}
+.pc-rank{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.pc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.pc-stat{background:rgba(0,0,0,.2);border-radius:8px;padding:8px 4px;text-align:center;}
+.pc-stat-val{font-size:18px;font-weight:900;color:var(--yellow);}
+.pc-stat-label{font-size:9px;color:var(--muted);margin-top:2px;}
+.share-card-btn{background:linear-gradient(135deg,var(--yellow),#f97316);color:#000;font-weight:700;font-size:12px;padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;transition:opacity .2s;}
+.share-card-btn:hover{opacity:.85;}
+
+/* BRACKET */
+.bracket-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;overflow-x:auto;}
+.bracket-title{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:12px;}
+.bracket-rounds{display:flex;gap:12px;min-width:340px;}
+.bracket-round{flex:1;}
+.bracket-round-title{font-size:10px;color:var(--muted);font-weight:700;text-align:center;margin-bottom:8px;padding:4px;background:rgba(245,197,24,.08);border-radius:6px;}
+.bracket-match{background:var(--card2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;}
+.bracket-team{padding:6px 10px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+.bracket-team.winner{background:rgba(34,197,94,.1);color:var(--green);}
+.bracket-team.loser{color:var(--muted);}
+.bracket-divider{height:1px;background:var(--border);}
+.bracket-score{font-weight:900;font-size:13px;}
+
+/* VOTE */
+.vote-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.vote-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.vote-sub{font-size:11px;color:var(--muted);margin-bottom:12px;}
+.vote-option{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s;}
+.vote-option:hover{border-color:var(--yellow);}
+.vote-option.voted{border-color:var(--yellow);background:rgba(245,197,24,.06);}
+.vote-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.vote-name{font-size:13px;font-weight:600;}
+.vote-pct{font-size:12px;font-weight:700;color:var(--yellow);}
+.vote-bar{background:rgba(255,255,255,.08);border-radius:3px;height:5px;overflow:hidden;}
+.vote-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--yellow),#f97316);transition:width .8s ease;}
+
+/* HALL OF FAME */
+.hof-card{background:linear-gradient(135deg,#1a1500,#2d2000);border:1px solid rgba(245,197,24,.3);border-radius:14px;padding:14px;margin-bottom:12px;}
+.hof-title{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.hof-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(245,197,24,.1);}
+.hof-item:last-child{border-bottom:none;}
+.hof-crown{font-size:20px;}
+.hof-info{flex:1;}
+.hof-name{font-size:13px;font-weight:700;}
+.hof-detail{font-size:11px;color:var(--muted);}
+.hof-badge{background:rgba(245,197,24,.15);color:var(--yellow);font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;border:1px solid rgba(245,197,24,.3);}
+
+/* STORE */
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.store-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;transition:border-color .2s,transform .2s;}
+.store-item:hover{border-color:var(--yellow);transform:translateY(-2px);}
+.store-icon{font-size:32px;margin-bottom:6px;}
+.store-name{font-size:12px;font-weight:700;margin-bottom:4px;}
+.store-desc{font-size:10px;color:var(--muted);margin-bottom:8px;}
+.store-price{background:rgba(245,197,24,.15);color:var(--yellow);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;transition:background .2s;}
+.store-price:hover{background:rgba(245,197,24,.3);}
+
+/* INVITE */
+.invite-card{background:linear-gradient(135deg,#0d1f3c,#1a3a5c);border:1px solid rgba(59,130,246,.3);border-radius:14px;padding:16px;margin-bottom:12px;text-align:center;}
+.invite-code{background:rgba(0,0,0,.3);border:2px dashed rgba(59,130,246,.4);border-radius:10px;padding:12px;font-size:22px;font-weight:900;color:var(--yellow);letter-spacing:4px;margin:12px 0;cursor:pointer;}
+.invite-btns{display:flex;gap:8px;}
+.invite-btn{flex:1;padding:10px;border-radius:10px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;border:none;transition:opacity .2s;}
+.invite-btn.wa{background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;}
+.invite-btn.copy{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+
+/* PROMO CARDS */
+.promo-card{border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;}
+.promo-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.3);}
+.promo-card.green{background:linear-gradient(135deg,#16a34a,#22c55e);}
+.promo-card.teal{background:linear-gradient(135deg,#0891b2,#06b6d4);}
+.promo-card.purple{background:linear-gradient(135deg,#6d28d9,#7c3aed);}
+.promo-card.orange{background:linear-gradient(135deg,#ea580c,#f97316);}
+.promo-card.gold{background:linear-gradient(135deg,#92400e,#d97706);}
+.promo-card.dark{background:var(--card2);border:1px solid var(--border);}
+.promo-card.dark-green{background:var(--card2);border:1px solid #166534;}
+.promo-card.dark-blue{background:var(--card2);border:1px solid #1e3a5f;}
+.card-text h3{font-size:13px;font-weight:700;margin-bottom:2px;}
+.card-text p{font-size:11px;opacity:.85;}
+.card-icon{font-size:28px;background:rgba(255,255,255,.15);border-radius:10px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.badge-chip{background:var(--yellow);color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:4px;display:inline-block;}
+
+/* TOURNAMENTS */
+.section-title{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--yellow);}
+.filter-tabs{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;}
+.filter-tab{padding:6px 12px;border-radius:20px;font-size:11px;font-family:'Cairo',sans-serif;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);white-space:nowrap;transition:all .2s;}
+.filter-tab.active{background:var(--yellow);color:#000;font-weight:700;border-color:var(--yellow);}
+.tourney-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;transition:border-color .2s,transform .2s;}
+.tourney-card:hover{border-color:var(--yellow);transform:translateY(-1px);}
+.tourney-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
+.tourney-name{font-size:15px;font-weight:700;}
+.tourney-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.status-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;}
+.status-open{background:rgba(34,197,94,.15);color:var(--green);border:1px solid var(--green);}
+.status-live{background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--red);}
+.status-soon{background:rgba(245,197,24,.15);color:var(--yellow);border:1px solid var(--yellow);}
+.players-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;}
+.progress-bar{background:rgba(255,255,255,.08);border-radius:4px;height:5px;margin-bottom:9px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--yellow),#f97316);}
+.tourney-footer{display:flex;justify-content:space-between;align-items:center;}
+.btn-sm{font-size:11px;cursor:pointer;background:none;border:none;font-family:'Cairo',sans-serif;color:var(--muted);}
+.btn-cancel{color:var(--red);}
+.btn-join{background:var(--yellow);color:#000;font-weight:700;font-size:12px;padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;transition:opacity .2s;}
+.btn-join:hover{opacity:.85;}
+.reg-badge{background:rgba(34,197,94,.15);color:var(--green);font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;border:1px solid rgba(34,197,94,.3);}
+
+/* CLASSEMENT */
+.classement-table{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;}
+.classement-header{display:grid;grid-template-columns:26px 1fr 34px 34px 34px 44px;gap:4px;padding:9px 12px;background:rgba(245,197,24,.08);border-bottom:1px solid var(--border);font-size:10px;color:var(--muted);font-weight:700;}
+.classement-row{display:grid;grid-template-columns:26px 1fr 34px 34px 34px 44px;gap:4px;padding:9px 12px;border-bottom:1px solid var(--border);font-size:11px;align-items:center;transition:background .2s;}
+.classement-row:last-child{border-bottom:none;}
+.classement-row:hover{background:rgba(245,197,24,.04);}
+.classement-row.me{background:rgba(245,197,24,.08);}
+.rank-num{font-weight:700;color:var(--muted);}
+.rank-1{color:gold;}.rank-2{color:silver;}.rank-3{color:#cd7f32;}
+.player-cell{display:flex;align-items:center;gap:6px;}
+.mini-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
+.pts{font-weight:700;color:var(--yellow);}
+
+/* RESULTS */
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:9px;}
+.result-header{font-size:10px;color:var(--muted);margin-bottom:8px;}
+.result-match{display:flex;align-items:center;justify-content:space-between;}
+.result-player{text-align:center;flex:1;}
+.result-name{font-size:11px;font-weight:700;margin-bottom:3px;}
+.result-score{font-size:26px;font-weight:900;}
+.score-win{color:var(--green);}.score-lose{color:var(--red);}.score-draw{color:var(--yellow);}
+.result-vs{font-size:11px;color:var(--muted);padding:0 8px;}
+
+/* COMPARE */
+.compare-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:12px;}
+.compare-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.compare-player{text-align:center;flex:1;}
+.compare-avatar{width:40px;height:40px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;}
+.compare-name{font-size:11px;font-weight:700;}
+.compare-vs{font-size:13px;color:var(--muted);font-weight:700;}
+.compare-stat{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+.compare-label{font-size:10px;color:var(--muted);width:65px;text-align:center;}
+.compare-bar-wrap{flex:1;display:flex;gap:3px;align-items:center;}
+.cbar{height:7px;border-radius:3px;transition:width .8s ease;}
+.cbar.left{background:linear-gradient(90deg,var(--blue),#60a5fa);border-radius:3px 0 0 3px;}
+.cbar.right{background:linear-gradient(90deg,#f97316,var(--yellow));border-radius:0 3px 3px 0;}
+.cbar-val{font-size:10px;font-weight:700;width:20px;text-align:center;}
+
+/* CHALLENGES */
+.challenge-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;}
+.challenge-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;}
+.challenge-title{font-size:13px;font-weight:700;}
+.challenge-timer{font-size:10px;color:var(--red);font-weight:700;background:rgba(239,68,68,.1);padding:3px 8px;border-radius:20px;}
+.challenge-item{display:flex;align-items:center;gap:9px;padding:9px;background:var(--card2);border-radius:10px;margin-bottom:7px;border:1px solid var(--border);cursor:pointer;transition:border-color .2s;}
+.challenge-item:hover{border-color:var(--yellow);}
+.challenge-item.done{opacity:.65;cursor:default;}
+.challenge-icon{font-size:20px;flex-shrink:0;}
+.challenge-info{flex:1;}
+.challenge-name{font-size:12px;font-weight:600;}
+.challenge-desc{font-size:10px;color:var(--muted);}
+.challenge-reward{font-size:11px;font-weight:700;color:var(--yellow);}
+.challenge-check{font-size:16px;}
+.ch-bar{background:rgba(255,255,255,.08);border-radius:3px;height:3px;margin-top:4px;overflow:hidden;}
+.ch-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--yellow),#f97316);}
+
+/* MESSAGES */
+.conv-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px;margin-bottom:8px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .2s;}
+.conv-item:hover{border-color:var(--yellow);}
+.conv-item.unread{border-right:3px solid var(--yellow);}
+.conv-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;}
+.av-green{background:linear-gradient(135deg,#16a34a,#22c55e);}
+.av-blue{background:linear-gradient(135deg,#1d4ed8,#3b82f6);}
+.av-purple{background:linear-gradient(135deg,#6d28d9,#7c3aed);}
+.av-red{background:linear-gradient(135deg,#b91c1c,#ef4444);}
+.av-orange{background:linear-gradient(135deg,#ea580c,#f97316);}
+.conv-info{flex:1;min-width:0;}
+.conv-name{font-size:12px;font-weight:700;margin-bottom:2px;}
+.conv-preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-right{text-align:left;flex-shrink:0;}
+.conv-time{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.unread-dot{background:var(--yellow);color:#000;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:auto;}
+.new-msg-btn{background:var(--yellow);color:#000;font-weight:700;font-size:13px;padding:11px;border-radius:12px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;margin-bottom:10px;}
+.msg-search{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;margin-bottom:10px;outline:none;}
+.msg-search:focus{border-color:var(--yellow);}
+
+/* CHAT */
+#chat-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column;}
+#chat-screen.open{display:flex;}
+.chat-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:11px 12px;display:flex;align-items:center;gap:9px;}
+.back-btn{background:none;border:none;color:var(--yellow);font-size:22px;cursor:pointer;}
+.chat-user-name{font-size:13px;font-weight:700;}
+.chat-user-status{font-size:10px;color:var(--green);}
+.chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;}
+.msg-bubble{max-width:75%;padding:9px 12px;border-radius:14px;font-size:12px;line-height:1.5;}
+.msg-bubble.received{background:var(--card2);border:1px solid var(--border);align-self:flex-end;border-bottom-right-radius:4px;}
+.msg-bubble.sent{background:linear-gradient(135deg,#1a3a5c,#1e4a7a);border:1px solid rgba(59,130,246,.3);align-self:flex-start;border-bottom-left-radius:4px;}
+.msg-time{font-size:9px;color:var(--muted);margin-top:3px;}
+.chat-input-area{background:var(--bg2);border-top:1px solid var(--border);padding:9px 11px;display:flex;gap:7px;align-items:flex-end;}
+.chat-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:9px 13px;font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);outline:none;resize:none;transition:border-color .2s;}
+.chat-input:focus{border-color:var(--yellow);}
+.send-btn{background:var(--yellow);color:#000;border:none;width:38px;height:38px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sound-notif{position:fixed;top:70px;right:12px;background:var(--green);color:#fff;font-size:12px;font-weight:700;padding:8px 14px;border-radius:10px;z-index:500;animation:slideDown .3s ease;display:none;}
+@keyframes slideDown{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* STATS */
+.stats-profile{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;text-align:center;position:relative;}
+.edit-profile-btn{position:absolute;top:10px;left:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:4px 9px;font-size:10px;color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif;}
+.stats-avatar{width:66px;height:66px;background:linear-gradient(135deg,var(--yellow),#f97316);border-radius:50%;margin:0 auto 9px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#000;cursor:pointer;position:relative;}
+.avatar-edit{position:absolute;bottom:0;right:0;background:var(--yellow);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.player-name{font-size:16px;font-weight:700;}
+.player-id{color:var(--muted);font-size:11px;margin-bottom:9px;}
+.badges-row{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:4px;}
+.badge-item{background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:10px;}
+.circle-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.circle-chart{position:relative;width:62px;height:62px;flex-shrink:0;}
+.circle-chart svg{transform:rotate(-90deg);}
+.circle-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--green);}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;text-align:center;}
+.stat-val{font-size:24px;font-weight:900;margin-bottom:3px;}
+.stat-val.yellow{color:var(--yellow);}.stat-val.green{color:var(--green);}.stat-val.red{color:var(--red);}.stat-val.blue{color:var(--blue);}
+.stat-label{font-size:10px;color:var(--muted);}
+.trust-card{background:var(--card);border:1px solid #166534;border-radius:12px;padding:13px;display:flex;align-items:center;gap:11px;margin-bottom:9px;}
+.trust-pct{font-size:20px;font-weight:900;color:var(--green);}
+.goals-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:9px;}
+.goal-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;}
+.goal-val{font-size:18px;font-weight:900;}
+.goal-val.green{color:var(--green);}.goal-val.red{color:var(--red);}.goal-val.yellow{color:var(--yellow);}
+.goal-label{font-size:9px;color:var(--muted);margin-top:2px;}
+.rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.rate-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;text-align:center;}
+.rate-val{font-size:20px;font-weight:900;color:var(--yellow);}
+.rate-label{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* NOTIF */
+#notif-panel{display:none;position:fixed;inset:0;z-index:150;}
+#notif-panel.open{display:block;}
+.notif-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);}
+.notif-drawer{position:absolute;top:0;right:0;width:280px;max-width:86vw;height:100%;background:var(--bg2);border-left:1px solid var(--border);padding:16px 13px;overflow-y:auto;animation:slideIn .3s ease;}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.notif-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
+.notif-title{font-size:14px;font-weight:700;}
+.close-btn{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);}
+.notif-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:7px;display:flex;gap:9px;}
+.notif-item.unread{border-right:3px solid var(--yellow);}
+.notif-icon{font-size:18px;}
+.notif-text{font-size:11px;line-height:1.5;}
+.notif-time{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* MODAL */
+#edit-modal,#profile-modal{display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center;padding:20px;}
+#edit-modal.open,#profile-modal.open{display:flex;}
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:20px 16px;width:100%;max-width:340px;position:relative;z-index:1;animation:fadeUp .3s ease;}
+.modal-title{font-size:14px;font-weight:700;margin-bottom:13px;}
+.modal-input{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;outline:none;margin-bottom:9px;}
+.modal-input:focus{border-color:var(--yellow);}
+.modal-btns{display:flex;gap:8px;}
+.btn-save{flex:1;background:var(--yellow);color:#000;font-weight:700;padding:10px;border-radius:10px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;}
+.btn-close-modal{flex:1;background:var(--card2);color:var(--muted);font-weight:700;padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-family:'Cairo',sans-serif;}
+
+/* MISC */
+.lang-btn{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:10px;color:var(--text);cursor:pointer;font-family:'Cairo',sans-serif;}
+.theme-btn{font-size:16px;cursor:pointer;background:none;border:none;}
+.logout-btn{background:none;border:1px solid var(--red);color:var(--red);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;padding:11px;border-radius:10px;cursor:pointer;width:100%;margin-top:11px;transition:background .2s;}
+.logout-btn:hover{background:rgba(239,68,68,.1);}
+.search-bar{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;margin-bottom:10px;outline:none;}
+.search-bar:focus{border-color:var(--yellow);}
+.btn-primary{background:linear-gradient(135deg,var(--yellow),#f97316);color:#000;font-weight:700;font-size:14px;padding:11px;border-radius:10px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;transition:opacity .2s;}
+.btn-primary:hover{opacity:.85;}
+.friendly-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;text-align:center;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="load-ball">⚽</div>
+  <div class="load-logo"><span>eFootball Arena</span></div>
+  <div class="load-sub">🌍 منصة eFootball العالمية</div>
+  <div class="load-bar-wrap"><div class="load-bar"></div></div>
+  <div class="load-txt">جاري التحميل...</div>
+</div>
+
+<!-- SOUND NOTIF -->
+<div class="sound-notif" id="sound-notif">🔔 رسالة جديدة!</div>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-logo-wrap"><div class="auth-logo">eFootball Arena</div></div>
+  <div class="auth-tagline">🌍 منصة eFootball العالمية</div>
+  <div class="auth-box">
+    <button class="btn-google" onclick="doGoogleLogin()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      المتابعة مع Google
+    </button>
+    <div class="security-box">
+      <div class="sec-title">🔒 أمانك يهمنا</div>
+      eFootball Arena منصة مرافقة فقط — <span>لا نطلب كلمة مرور لعبتك</span>. بياناتك محمية تماماً.
+    </div>
+    <div class="auth-divider">أو بالإيميل</div>
+    <div class="auth-tab-btns">
+      <button class="auth-tab-btn active" onclick="switchAuthTab('login',this)">تسجيل الدخول</button>
+      <button class="auth-tab-btn" onclick="switchAuthTab('register',this)">إنشاء حساب</button>
+    </div>
+    <div class="auth-form active" id="login-form">
+      <div class="error-msg" id="login-error"></div>
+      <div class="input-group"><label class="input-label">البريد الإلكتروني</label><div class="input-wrap"><input class="input-field" type="email" id="login-email" placeholder="example@email.com" dir="ltr" style="padding-left:36px"><span class="input-ico">✉️</span></div></div>
+      <div class="input-group"><label class="input-label">كلمة المرور</label><div class="input-wrap"><input class="input-field" type="password" id="login-pass" placeholder="••••••••" dir="ltr" style="padding-left:36px"><span class="input-ico" onclick="togglePass('login-pass')">👁️</span></div></div>
+      <div class="forgot-link">نسيت كلمة السر؟</div>
+      <button class="btn-auth" onclick="doLogin()">دخول</button>
+    </div>
+    <div class="auth-form" id="register-form">
+      <div class="error-msg" id="reg-error"></div>
+      <div class="success-msg" id="reg-success"></div>
+      <div class="input-group"><label class="input-label">اسم اللاعب</label><input class="input-field" type="text" id="reg-name" placeholder="Ahmed_Player"></div>
+      <div class="input-group"><label class="input-label">البريد الإلكتروني</label><div class="input-wrap"><input class="input-field" type="email" id="reg-email" placeholder="example@email.com" dir="ltr" style="padding-left:36px"><span class="input-ico">✉️</span></div></div>
+      <div class="input-group"><label class="input-label">كلمة المرور</label><div class="input-wrap"><input class="input-field" type="password" id="reg-pass" placeholder="••••••••" dir="ltr" style="padding-left:36px"><span class="input-ico" onclick="togglePass('reg-pass')">👁️</span></div></div>
+      <div class="input-group"><label class="input-label">تأكيد كلمة المرور</label><input class="input-field" type="password" id="reg-pass2" placeholder="••••••••" dir="ltr"></div>
+      <button class="btn-auth" onclick="doRegister()">إنشاء حساب ✅</button>
+    </div>
+  </div>
+  <a href="https://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6?mode=gi_t" target="_blank" class="wa-btn">
+    <svg width="20" height="20" viewBox="0 0 32 32" fill="white"><path d="M16 0C7.163 0 0 7.163 0 16c0 2.822.736 5.472 2.027 7.776L0 32l8.463-2.004A15.94 15.94 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm8.406 22.594c-.35.984-2.04 1.88-2.812 2-.735.113-1.656.16-5.328-1.14-4.469-1.578-7.344-6.11-7.563-6.39-.219-.282-1.781-2.375-1.781-4.532 0-2.156 1.125-3.218 1.531-3.656.406-.437.89-.547 1.188-.547h.843c.297 0 .594.004.844.625.297.734 1.015 2.578 1.094 2.766.078.187.125.406.016.656-.11.25-.172.406-.344.61-.172.203-.36.453-.516.609-.172.172-.344.359-.148.703.197.344.875 1.453 1.875 2.344 1.297 1.156 2.39 1.516 2.734 1.688.344.172.547.14.75-.094.203-.234.875-1.016 1.11-1.359.234-.344.468-.297.797-.172.328.125 2.078 1.016 2.422 1.188.344.172.578.266.656.406.078.14.078.844-.28 1.828z"/></svg>
+    انضم لمجموعة واتساب الرسمية 🏆
+  </a>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <header>
+    <div class="pts-chip" id="header-pts">🏅 0 pts</div>
+    <div class="logo">e<span>Football</span> Arena</div>
+    <div class="header-right">
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="lang-btn" onclick="cycleLang()">🌍 AR</button>
+      <button class="icon-btn" onclick="toggleNotif()">🔔<div class="notif-badge" id="notif-count">5</div></button>
+      <div class="user-avatar" id="user-avatar-btn" onclick="showTab('stats')">A</div>
+    </div>
+  </header>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('home')"><span class="tab-icon">⊞</span>الرئيسية</button>
+    <button class="tab" onclick="showTab('tournaments')"><span class="tab-icon">🏆</span>البطولات</button>
+    <button class="tab" onclick="showTab('results')"><span class="tab-icon">📋</span>النتائج</button>
+    <button class="tab" onclick="showTab('challenges')"><span class="tab-icon">🎯</span>تحديات</button>
+    <button class="tab" onclick="showTab('friendly')"><span class="tab-icon">⚽</span>ودية</button>
+    <button class="tab" onclick="showTab('messages')"><span class="tab-icon">💬</span>رسائل</button>
+    <button class="tab" onclick="showTab('store')"><span class="tab-icon">🏪</span>المتجر</button>
+    <button class="tab" onclick="showTab('stats')"><span class="tab-icon">👤</span>بروفايل</button>
+  </div>
+  <main>
+
+    <!-- HOME -->
+    <div class="section active" id="sec-home">
+      <div class="countdown-card">
+        <div class="countdown-title">⏳ البطولة القادمة تبدأ في</div>
+        <div class="countdown-tourney">🏆 بطولة M21 - الموسم الأول</div>
+        <div class="countdown-boxes">
+          <div class="cd-box"><span class="cd-num" id="cd-days">00</span><span class="cd-label">يوم</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-hours">00</span><span class="cd-label">ساعة</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-mins">00</span><span class="cd-label">دقيقة</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-secs">00</span><span class="cd-label">ثانية</span></div>
+        </div>
+      </div>
+      <div class="rank-banner">
+        <div class="rank-icon">🥉</div>
+        <div class="rank-info">
+          <div class="rank-title">Bronze II</div>
+          <div class="rank-sub">18 نقطة • 32 نقطة للترقية لـ Silver</div>
+          <div class="rank-bar"><div class="rank-fill" style="width:36%;background:linear-gradient(90deg,#cd7f32,#f97316)"></div></div>
+          <div class="rank-pts-txt">18 / 50 pts → 🥈 Silver</div>
+        </div>
+      </div>
+      <div class="motm-card">
+        <div class="motm-badge">⭐ رجل المباراة - الجولة 9</div>
+        <div style="font-size:15px;font-weight:900;">FootballKing_22 🏆</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">5 أهداف • 0 مستقبلة • نسبة فوز 89%</div>
+      </div>
+      <div class="promo-card green" onclick="showTab('tournaments')">
+        <div class="card-text"><h3>جاهز للمنافسة؟</h3><p>سجّل في البطولة الرسمية 🥇</p></div>
+        <div class="card-icon">🏆</div>
+      </div>
+      <div class="promo-card teal" onclick="showTab('friendly')">
+        <div class="card-text"><h3>تبحث على خصم؟</h3><p>مباراة ودية فورية ⚡</p></div>
+        <div class="card-icon">⚽</div>
+      </div>
+      <div class="promo-card orange" onclick="showTab('challenges')">
+        <div class="card-text"><h3>تحديات اليوم 🎯</h3><p>أكمل التحديات واربح نقاط!</p></div>
+        <div class="card-icon">🎯</div>
+      </div>
+      <div class="promo-card gold" onclick="showTab('store')">
+        <div class="card-text"><h3>متجر النقاط 🏪</h3><p>بادل نقاطك بجوائز حصرية!</p></div>
+        <div class="card-icon">🎁</div>
+      </div>
+      <div class="promo-card dark-blue" onclick="showTab('invite')">
+        <div class="card-text"><h3>ادعو أصدقاءك 🎉</h3><p>اربح 20 نقطة لكل دعوة!</p></div>
+        <div class="card-icon">👥</div>
+      </div>
+      <div class="promo-card dark-green" onclick="window.open('https://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6?mode=gi_t','_blank')">
+        <div class="card-text"><h3>مجموعة واتساب الرسمية</h3><p>🏆 تابع البطولات مع اللاعبين</p></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn-join" onclick="event.stopPropagation();window.open('https://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6?mode=gi_t','_blank')">انضم</button>
+          <div class="card-icon" style="background:rgba(34,197,94,.15);">💬</div>
+        </div>
+      </div>
+      <div class="promo-card dark">
+        <div class="card-text"><h3>التطبيق قادم على Google Play</h3><p>ننتظر نزول التطبيق قريباً 🚀</p><span class="badge-chip">قريباً</span></div>
+        <div class="card-icon">📱</div>
+      </div>
+    </div>
+
+    <!-- TOURNAMENTS -->
+    <div class="section" id="sec-tournaments">
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="filterTab(this)">موبايل 📱</div>
+        <div class="filter-tab" onclick="filterTab(this)">كونسول 🎮</div>
+        <div class="filter-tab" onclick="filterTab(this)">مخصصة 🔒</div>
+      </div>
+      <div class="section-title">🎲 سحب عشوائي للمجموعات</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;text-align:center;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">اضغط للسحب العشوائي لمجموعات بطولة M21</div>
+        <button class="btn-primary" onclick="doDraw()" style="margin-bottom:0">🎰 سحب المجموعات</button>
+        <div id="draw-result" style="margin-top:12px;display:none;"></div>
+      </div>
+      <div class="tourney-card">
+        <div class="tourney-header"><div><div class="tourney-name">بطولة M20</div><div class="tourney-meta">📱 موسم 1</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><div class="status-badge status-open">التسجيل مفتوح</div><div class="reg-badge">✓ مسجل</div></div></div>
+        <div class="players-row"><span>👥 11 / 16 لاعب</span><span>69%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:69%"></div></div>
+        <div class="tourney-footer"><button class="btn-sm" onclick="showTab('bracket')">› الأقواس Bracket</button><button class="btn-sm btn-cancel">إلغاء التسجيل</button></div>
+      </div>
+      <div class="tourney-card">
+        <div class="tourney-header"><div><div class="tourney-name">بطولة M19</div><div class="tourney-meta">📱 موسم 1</div></div><div class="status-badge status-live">جارية ⏱</div></div>
+        <div class="players-row"><span>👥 16 / 16 لاعب</span><span>100%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+        <div class="tourney-footer"><button class="btn-sm" onclick="showTab('bracket')">› الأقواس Bracket</button><span style="font-size:10px;color:var(--muted)">⏰ جارية</span></div>
+      </div>
+      <div class="tourney-card">
+        <div class="tourney-header"><div><div class="tourney-name">بطولة M21</div><div class="tourney-meta">📱 موسم 1</div></div><div class="status-badge status-soon">قريباً</div></div>
+        <div class="players-row"><span>👥 3 / 16 لاعب</span><span>19%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:19%"></div></div>
+        <div class="tourney-footer"><button class="btn-sm">› التفاصيل</button><button class="btn-join">سجّل</button></div>
+      </div>
+    </div>
+
+    <!-- BRACKET -->
+    <div class="section" id="sec-bracket">
+      <div class="section-title">🏆 Bracket - نظام الإقصاء M20</div>
+      <div class="bracket-wrap">
+        <div class="bracket-title">جدول الإقصاء</div>
+        <div class="bracket-rounds">
+          <div class="bracket-round">
+            <div class="bracket-round-title">ربع النهائي</div>
+            <div class="bracket-match"><div class="bracket-team winner">FootballKing <span class="bracket-score">3</span></div><div class="bracket-divider"></div><div class="bracket-team loser">Maher_PES <span class="bracket-score">1</span></div></div>
+            <div class="bracket-match"><div class="bracket-team winner">Ahmed_TN <span class="bracket-score">2</span></div><div class="bracket-divider"></div><div class="bracket-team loser">Ali_G <span class="bracket-score">0</span></div></div>
+            <div class="bracket-match"><div class="bracket-team winner">Gamer_Slim <span class="bracket-score">4</span></div><div class="bracket-divider"></div><div class="bracket-team loser">Yassine_M <span class="bracket-score">2</span></div></div>
+            <div class="bracket-match"><div class="bracket-team winner" id="br-me">أنت <span class="bracket-score">3</span></div><div class="bracket-divider"></div><div class="bracket-team loser">Coach_Ali <span class="bracket-score">1</span></div></div>
+          </div>
+          <div class="bracket-round">
+            <div class="bracket-round-title">نصف النهائي</div>
+            <div class="bracket-match" style="margin-bottom:50px"><div class="bracket-team winner">FootballKing <span class="bracket-score">2</span></div><div class="bracket-divider"></div><div class="bracket-team loser">Ahmed_TN <span class="bracket-score">1</span></div></div>
+            <div class="bracket-match"><div class="bracket-team winner">Gamer_Slim <span class="bracket-score">3</span></div><div class="bracket-divider"></div><div class="bracket-team" style="color:var(--yellow)" id="br-me2">أنت <span class="bracket-score">2</span></div></div>
+          </div>
+          <div class="bracket-round">
+            <div class="bracket-round-title">النهائي 🏆</div>
+            <div class="bracket-match" style="margin-top:30px"><div class="bracket-team winner" style="color:gold">FootballKing 🏆 <span class="bracket-score">4</span></div><div class="bracket-divider"></div><div class="bracket-team loser">Gamer_Slim <span class="bracket-score">2</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="section" id="sec-results">
+      <div class="section-title">🏅 Classement</div>
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="filterTab(this)">M20</div>
+        <div class="filter-tab" onclick="filterTab(this)">M19</div>
+        <div class="filter-tab" onclick="filterTab(this)">الكل</div>
+      </div>
+      <div class="classement-table">
+        <div class="classement-header"><span>#</span><span>اللاعب</span><span style="text-align:center">ف</span><span style="text-align:center">خ</span><span style="text-align:center">ت</span><span style="text-align:center">Pts</span></div>
+        <div class="classement-row"><span class="rank-num rank-1">1</span><div class="player-cell"><div class="mini-avatar av-green">F</div>FootballKing</div><span style="text-align:center;color:var(--green)">8</span><span style="text-align:center;color:var(--red)">1</span><span style="text-align:center">0</span><span class="pts">24</span></div>
+        <div class="classement-row"><span class="rank-num rank-2">2</span><div class="player-cell"><div class="mini-avatar av-blue">G</div>Gamer_Slim</div><span style="text-align:center;color:var(--green)">7</span><span style="text-align:center;color:var(--red)">2</span><span style="text-align:center">0</span><span class="pts">21</span></div>
+        <div class="classement-row"><span class="rank-num rank-3">3</span><div class="player-cell"><div class="mini-avatar av-purple">A</div>Ahmed_TN</div><span style="text-align:center;color:var(--green)">6</span><span style="text-align:center;color:var(--red)">2</span><span style="text-align:center">1</span><span class="pts">19</span></div>
+        <div class="classement-row me"><span class="rank-num">4</span><div class="player-cell"><div class="mini-avatar" id="cl-av" style="background:linear-gradient(135deg,var(--yellow),#f97316);color:#000">A</div><span id="cl-name">أنت</span></div><span style="text-align:center;color:var(--green)">6</span><span style="text-align:center;color:var(--red)">3</span><span style="text-align:center">0</span><span class="pts">18</span></div>
+        <div class="classement-row"><span class="rank-num">5</span><div class="player-cell"><div class="mini-avatar av-red">C</div>Coach_Ali</div><span style="text-align:center;color:var(--green)">5</span><span style="text-align:center;color:var(--red)">4</span><span style="text-align:center">0</span><span class="pts">15</span></div>
+        <div class="classement-row"><span class="rank-num">6</span><div class="player-cell"><div class="mini-avatar av-orange">M</div>Maher_PES</div><span style="text-align:center;color:var(--green)">4</span><span style="text-align:center;color:var(--red)">5</span><span style="text-align:center">0</span><span class="pts">12</span></div>
+      </div>
+
+      <!-- HALL OF FAME -->
+      <div class="hof-card">
+        <div class="hof-title">👑 Hall of Fame - لوحة الشرف</div>
+        <div class="hof-item"><div class="hof-crown">🥇</div><div class="hof-info"><div class="hof-name">FootballKing_22</div><div class="hof-detail">بطولة M19 • 9 فوز</div></div><div class="hof-badge">أسبوع 1</div></div>
+        <div class="hof-item"><div class="hof-crown">🥈</div><div class="hof-info"><div class="hof-name">Gamer_Slim</div><div class="hof-detail">بطولة M18 • 8 فوز</div></div><div class="hof-badge">أسبوع 2</div></div>
+        <div class="hof-item"><div class="hof-crown">🌟</div><div class="hof-info"><div class="hof-name">Ahmed_TN</div><div class="hof-detail">أحسن هداف • 32 هدف</div></div><div class="hof-badge">الموسم</div></div>
+      </div>
+
+      <!-- VOTE -->
+      <div class="vote-card">
+        <div class="vote-title">🗳️ تصويت - أحسن هدف الأسبوع</div>
+        <div class="vote-sub">صوّت لأحسن هدف في الجولة 9</div>
+        <div class="vote-option" id="v1" onclick="doVote(1,65)"><div class="vote-row"><div class="vote-name">FootballKing - رأسية احترافية 🔥</div><div class="vote-pct">65%</div></div><div class="vote-bar"><div class="vote-fill" style="width:65%"></div></div></div>
+        <div class="vote-option" id="v2" onclick="doVote(2,25)"><div class="vote-row"><div class="vote-name">Ahmed_TN - رمية زاوية 🎯</div><div class="vote-pct">25%</div></div><div class="vote-bar"><div class="vote-fill" style="width:25%"></div></div></div>
+        <div class="vote-option" id="v3" onclick="doVote(3,10)"><div class="vote-row"><div class="vote-name">Gamer_Slim - تسديدة من بعيد ⚡</div><div class="vote-pct">10%</div></div><div class="vote-bar"><div class="vote-fill" style="width:10%"></div></div></div>
+      </div>
+
+      <!-- COMPARE -->
+      <div class="section-title">⚔️ مقارنة لاعبين</div>
+      <div class="compare-card">
+        <div class="compare-header">
+          <div class="compare-player"><div class="compare-avatar av-green" style="width:40px;height:40px;">F</div><div class="compare-name">FootballKing</div></div>
+          <div class="compare-vs">VS</div>
+          <div class="compare-player"><div class="compare-avatar" id="cmp-av" style="width:40px;height:40px;background:linear-gradient(135deg,var(--yellow),#f97316);color:#000">A</div><div class="compare-name" id="cmp-name">أنت</div></div>
+        </div>
+        <div class="compare-stat"><div class="cbar-val" style="color:var(--green)">24</div><div class="compare-bar-wrap"><div class="cbar right" style="width:100%"></div><div class="cbar left" style="width:75%"></div></div><div class="cbar-val" style="color:var(--yellow)">18</div><div class="compare-label">النقاط</div></div>
+        <div class="compare-stat"><div class="cbar-val" style="color:var(--green)">8</div><div class="compare-bar-wrap"><div class="cbar right" style="width:100%"></div><div class="cbar left" style="width:75%"></div></div><div class="cbar-val" style="color:var(--yellow)">6</div><div class="compare-label">فوز</div></div>
+        <div class="compare-stat"><div class="cbar-val" style="color:var(--green)">32</div><div class="compare-bar-wrap"><div class="cbar right" style="width:100%"></div><div class="cbar left" style="width:87%"></div></div><div class="cbar-val" style="color:var(--yellow)">28</div><div class="compare-label">أهداف</div></div>
+        <div class="compare-stat"><div class="cbar-val" style="color:var(--green)">89%</div><div class="compare-bar-wrap"><div class="cbar right" style="width:100%"></div><div class="cbar left" style="width:75%"></div></div><div class="cbar-val" style="color:var(--yellow)">67%</div><div class="compare-label">فوز%</div></div>
+      </div>
+
+      <div class="section-title">📋 آخر النتائج</div>
+      <div class="result-card"><div class="result-header">بطولة M19 • الجولة 9 • أمس</div><div class="result-match"><div class="result-player"><div class="result-name" id="rn1">أنت</div><div class="result-score score-win">4</div></div><div class="result-vs">VS</div><div class="result-player"><div class="result-name">Coach_Ali</div><div class="result-score score-lose">1</div></div></div></div>
+      <div class="result-card"><div class="result-header">بطولة M19 • الجولة 8 • الأحد</div><div class="result-match"><div class="result-player"><div class="result-name" id="rn2">أنت</div><div class="result-score score-lose">2</div></div><div class="result-vs">VS</div><div class="result-player"><div class="result-name">FootballKing</div><div class="result-score score-win">5</div></div></div></div>
+    </div>
+
+    <!-- CHALLENGES -->
+    <div class="section" id="sec-challenges">
+      <div class="challenge-card">
+        <div class="challenge-header"><div class="challenge-title">🎯 تحديات اليوم</div><div class="challenge-timer" id="challenge-timer">ينتهي في: --:--:--</div></div>
+        <div class="challenge-item" id="ch1" onclick="completeChallenge('ch1',10)"><div class="challenge-icon">⚽</div><div class="challenge-info"><div class="challenge-name">سجّل 3 أهداف في مباراة</div><div class="challenge-desc">Hat-trick في أي مباراة</div><div class="ch-bar"><div class="ch-fill" style="width:33%"></div></div></div><div class="challenge-reward">+10 pts</div><div class="challenge-check">⭕</div></div>
+        <div class="challenge-item done" id="ch2"><div class="challenge-icon">🏆</div><div class="challenge-info"><div class="challenge-name">العب مباراة ودية</div><div class="challenge-desc">أي مباراة ودية تحسب</div><div class="ch-bar"><div class="ch-fill" style="width:100%"></div></div></div><div class="challenge-reward">+5 pts</div><div class="challenge-check">✅</div></div>
+        <div class="challenge-item" id="ch3" onclick="completeChallenge('ch3',15)"><div class="challenge-icon">💬</div><div class="challenge-info"><div class="challenge-name">راسل 3 لاعبين مختلفين</div><div class="challenge-desc">تواصل مع اللاعبين</div><div class="ch-bar"><div class="ch-fill" style="width:66%"></div></div></div><div class="challenge-reward">+15 pts</div><div class="challenge-check">⭕</div></div>
+        <div class="challenge-item" id="ch4" onclick="completeChallenge('ch4',20)"><div class="challenge-icon">🔥</div><div class="challenge-info"><div class="challenge-name">فز بفارق 3 أهداف</div><div class="challenge-desc">Clean sheet + 3 أهداف</div><div class="ch-bar"><div class="ch-fill" style="width:0%"></div></div></div><div class="challenge-reward">+20 pts</div><div class="challenge-check">⭕</div></div>
+        <div class="challenge-item" id="ch5" onclick="completeChallenge('ch5',25)"><div class="challenge-icon">👑</div><div class="challenge-info"><div class="challenge-name">صدّر الترتيب لمدة يوم</div><div class="challenge-desc">كن الأول في Classement</div><div class="ch-bar"><div class="ch-fill" style="width:0%"></div></div></div><div class="challenge-reward">+25 pts</div><div class="challenge-check">⭕</div></div>
+      </div>
+    </div>
+
+    <!-- FRIENDLY -->
+    <div class="section" id="sec-friendly">
+      <div class="friendly-card">
+        <div style="font-size:44px;margin-bottom:10px;">⚽</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:5px;">مباراة ودية الآن؟</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:13px;">ابحث عن خصم وابدأ الفورية</div>
+        <button class="btn-primary">🔍 ابحث عن خصم</button>
+      </div>
+      <input class="search-bar" type="text" placeholder="🔎 ابحث عن لاعب...">
+      <div class="section-title">لاعبون متاحون 🟢</div>
+      <div class="tourney-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;"><div><div style="font-weight:700;font-size:13px;">FootballKing_22 🏆</div><div style="font-size:10px;color:var(--muted)">موبايل • فوز 89% • 🟢 متصل</div></div><div style="display:flex;gap:6px;"><button class="btn-sm" onclick="showPlayerCard('FootballKing_22','F','av-green','89%',24,32)">👤</button><button class="btn-join" onclick="openChat('FootballKing_22','🟢')">تحدّى</button></div></div>
+      <div class="tourney-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;"><div><div style="font-weight:700;font-size:13px;">Ahmed_TN ⚡</div><div style="font-size:10px;color:var(--muted)">موبايل • فوز 72% • 🟢 متصل</div></div><div style="display:flex;gap:6px;"><button class="btn-sm" onclick="showPlayerCard('Ahmed_TN','A','av-purple','72%',19,28)">👤</button><button class="btn-join" onclick="openChat('Ahmed_TN','🟢')">تحدّى</button></div></div>
+      <div class="tourney-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;"><div><div style="font-weight:700;font-size:13px;">Gamer_Slim 🔥</div><div style="font-size:10px;color:var(--muted)">موبايل • فوز 58% • 🟡 منذ ساعة</div></div><div style="display:flex;gap:6px;"><button class="btn-sm" onclick="showPlayerCard('Gamer_Slim','G','av-blue','58%',21,26)">👤</button><button class="btn-join" onclick="openChat('Gamer_Slim','🟡')">تحدّى</button></div></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="section" id="sec-messages">
+      <button class="new-msg-btn" onclick="openNewChat()">✏️ رسالة جديدة</button>
+      <input class="msg-search" type="text" placeholder="🔎 ابحث في الرسائل...">
+      <div class="conv-item unread" onclick="openChat('Ahmed_TN','🟢')"><div class="conv-avatar av-green">A</div><div class="conv-info"><div class="conv-name">Ahmed_TN ⚡</div><div class="conv-preview">جاهز للمباراة؟ 🎮</div></div><div class="conv-right"><div class="conv-time">09:32</div><div class="unread-dot">2</div></div></div>
+      <div class="conv-item unread" onclick="openChat('Gamer_Slim','🟡')"><div class="conv-avatar av-blue">G</div><div class="conv-info"><div class="conv-name">Gamer_Slim 🔥</div><div class="conv-preview">نتقابلو الساعة 8 ✅</div></div><div class="conv-right"><div class="conv-time">أمس</div><div class="unread-dot">1</div></div></div>
+      <div class="conv-item" onclick="openChat('FootballKing_22','🟢')"><div class="conv-avatar av-purple">F</div><div class="conv-info"><div class="conv-name">FootballKing_22 🏆</div><div class="conv-preview">بطولة M20 تبدأ الأسبوع القادم</div></div><div class="conv-right"><div class="conv-time">الإثنين</div></div></div>
+      <div class="conv-item" onclick="openChat('Coach_Ali','🔴')"><div class="conv-avatar av-red">C</div><div class="conv-info"><div class="conv-name">Coach_Ali</div><div class="conv-preview">تهانينا على الفوز! 🎉</div></div><div class="conv-right"><div class="conv-time">الأحد</div></div></div>
+    </div>
+
+    <!-- STORE -->
+    <div class="section" id="sec-store">
+      <div style="background:linear-gradient(135deg,#92400e,#d97706);border-radius:14px;padding:14px;margin-bottom:14px;text-align:center;">
+        <div style="font-size:12px;opacity:.85;margin-bottom:4px;">رصيد نقاطك</div>
+        <div style="font-size:32px;font-weight:900;">🏅 18 نقطة</div>
+      </div>
+      <div class="section-title">🎁 الجوائز المتاحة</div>
+      <div class="store-grid">
+        <div class="store-item"><div class="store-icon">🏆</div><div class="store-name">شارة بطل</div><div class="store-desc">شارة حصرية في بروفايلك</div><button class="store-price" onclick="buyItem('شارة بطل',15)">15 pts</button></div>
+        <div class="store-item"><div class="store-icon">⭐</div><div class="store-name">نجمة ذهبية</div><div class="store-desc">أيقونة في اسمك</div><button class="store-price" onclick="buyItem('نجمة ذهبية',10)">10 pts</button></div>
+        <div class="store-item"><div class="store-icon">🎮</div><div class="store-name">إطار مميز</div><div class="store-desc">إطار خاص للصورة</div><button class="store-price" onclick="buyItem('إطار مميز',20)">20 pts</button></div>
+        <div class="store-item"><div class="store-icon">🔥</div><div class="store-name">لقب Legend</div><div class="store-desc">لقب حصري في الترتيب</div><button class="store-price" onclick="buyItem('لقب Legend',50)">50 pts</button></div>
+        <div class="store-item"><div class="store-icon">💎</div><div class="store-name">بروفايل VIP</div><div class="store-desc">تصميم مميز للبروفايل</div><button class="store-price" onclick="buyItem('بروفايل VIP',100)">100 pts</button></div>
+        <div class="store-item"><div class="store-icon">🎁</div><div class="store-name">مفاجأة عشوائية</div><div class="store-desc">جائزة مجهولة!</div><button class="store-price" onclick="buyItem('مفاجأة',5)">5 pts</button></div>
+      </div>
+    </div>
+
+    <!-- INVITE -->
+    <div class="section" id="sec-invite">
+      <div class="invite-card">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">👥 ادعو أصدقاءك</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">اربح 20 نقطة لكل صديق ينضم عبر رابطك!</div>
+        <div class="invite-code" id="invite-code" onclick="copyCode()">EFA-0000</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px;">اضغط على الكود لنسخه 👆</div>
+        <div class="invite-btns">
+          <button class="invite-btn wa" onclick="shareWA()">📲 شارك على واتساب</button>
+          <button class="invite-btn copy" onclick="copyCode()">📋 انسخ الرابط</button>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;">
+        <div class="section-title" style="margin-bottom:8px;">إحصائيات الدعوات</div>
+        <div style="display:flex;justify-content:space-around;text-align:center;">
+          <div><div style="font-size:24px;font-weight:900;color:var(--yellow)">0</div><div style="font-size:10px;color:var(--muted)">دعوات أُرسلت</div></div>
+          <div><div style="font-size:24px;font-weight:900;color:var(--green)">0</div><div style="font-size:10px;color:var(--muted)">انضموا</div></div>
+          <div><div style="font-size:24px;font-weight:900;color:var(--blue)">0</div><div style="font-size:10px;color:var(--muted)">نقاط ربحت</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="section" id="sec-stats">
+      <div class="player-card-wrap">
+        <div class="pc-avatar" id="pc-avatar">A</div>
+        <div class="pc-name" id="pc-name">اسم اللاعب</div>
+        <div class="pc-rank">🥉 Bronze II • ID: #0000</div>
+        <div class="pc-stats">
+          <div class="pc-stat"><div class="pc-stat-val">9</div><div class="pc-stat-label">مباريات</div></div>
+          <div class="pc-stat"><div class="pc-stat-val">67%</div><div class="pc-stat-label">فوز%</div></div>
+          <div class="pc-stat"><div class="pc-stat-val">28</div><div class="pc-stat-label">أهداف</div></div>
+        </div>
+        <button class="share-card-btn" onclick="shareMyCard()">📤 شارك بطاقتي</button>
+      </div>
+      <div class="stats-profile">
+        <button class="edit-profile-btn" onclick="openEditModal()">✏️ تعديل</button>
+        <div class="stats-avatar" id="stats-avatar" onclick="openEditModal()">A<div class="avatar-edit">✏️</div></div>
+        <div class="player-name" id="stats-name">اسم اللاعب</div>
+        <div class="player-id" id="stats-id">ID: #0000 • موبايل</div>
+        <div class="badges-row">
+          <span class="badge-item">🥉 Bronze II</span>
+          <span class="badge-item">✅ موثوق</span>
+          <span class="badge-item">⚡ هجوم قوي</span>
+          <span class="badge-item">🔥 سلسلة 5</span>
+        </div>
+      </div>
+      <div class="circle-wrap">
+        <div class="circle-chart"><svg width="62" height="62" viewBox="0 0 62 62"><circle cx="31" cy="31" r="24" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="7"/><circle cx="31" cy="31" r="24" fill="none" stroke="#22c55e" stroke-width="7" stroke-dasharray="150.8" stroke-dashoffset="49.7" stroke-linecap="round"/></svg><div class="circle-pct">67%</div></div>
+        <div><div style="font-weight:700;font-size:13px;">نسبة الفوز</div><div style="font-size:11px;color:var(--muted)">9 مباريات مُلعبة</div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-val green">6</div><div class="stat-label">فوز</div></div>
+        <div class="stat-card"><div class="stat-val red">3</div><div class="stat-label">خسارة</div></div>
+        <div class="stat-card"><div class="stat-val yellow">0</div><div class="stat-label">تعادل</div></div>
+        <div class="stat-card"><div class="stat-val blue">9</div><div class="stat-label">مباريات</div></div>
+      </div>
+      <div class="trust-card"><div class="trust-pct">100%</div><div><div style="font-weight:700;font-size:12px">لاعب موثوق ✅</div><div style="font-size:10px;color:var(--muted)">يلتزم بمواعيد مبارياته</div></div></div>
+      <div class="section-title" style="margin-top:4px">⚽ إحصائيات الأهداف</div>
+      <div class="goals-grid">
+        <div class="goal-card"><div class="goal-val green">28</div><div class="goal-label">مُسجّلة</div></div>
+        <div class="goal-card"><div class="goal-val yellow">16+</div><div class="goal-label">الفارق</div></div>
+        <div class="goal-card"><div class="goal-val red">12</div><div class="goal-label">مُستقبَلة</div></div>
+      </div>
+      <div class="rates-grid">
+        <div class="rate-card"><div class="rate-val">3.1</div><div class="rate-label">معدل التسجيل</div></div>
+        <div class="rate-card"><div class="rate-val">1.3</div><div class="rate-label">معدل الاستقبال</div></div>
+      </div>
+      <button class="btn-primary" style="margin-top:10px" onclick="showTab('invite')">👥 ادعو أصدقاء واربح نقاط</button>
+      <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>
+
+  </main>
+</div>
+
+<!-- CHAT -->
+<div id="chat-screen">
+  <div class="chat-header">
+    <button class="back-btn" onclick="closeChat()">→</button>
+    <div class="conv-avatar av-green" id="chat-avatar" style="width:34px;height:34px;font-size:13px">A</div>
+    <div style="flex:1"><div class="chat-user-name" id="chat-name">Ahmed_TN</div><div class="chat-user-status" id="chat-status">🟢 متصل الآن</div></div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-area">
+    <button class="send-btn" onclick="sendMsg()">↑</button>
+    <textarea class="chat-input" id="chat-input" placeholder="اكتب رسالتك..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+  </div>
+</div>
+
+<!-- NOTIF PANEL -->
+<div id="notif-panel">
+  <div class="notif-overlay" onclick="toggleNotif()"></div>
+  <div class="notif-drawer">
+    <div class="notif-header"><div class="notif-title">🔔 الإشعارات</div><button class="close-btn" onclick="toggleNotif()">✕</button></div>
+    <div class="notif-item unread"><div class="notif-icon">🏆</div><div><div class="notif-text">تم تسجيلك في بطولة M20!</div><div class="notif-time">منذ 5 دقائق</div></div></div>
+    <div class="notif-item unread"><div class="notif-icon">⚽</div><div><div class="notif-text">Ahmed_TN يريد مباراة ودية معك</div><div class="notif-time">منذ 20 دقيقة</div></div></div>
+    <div class="notif-item unread"><div class="notif-icon">🎯</div><div><div class="notif-text">تحديات اليوم متاحة! اربح 75 نقطة</div><div class="notif-time">منذ ساعة</div></div></div>
+    <div class="notif-item unread"><div class="notif-icon">🗳️</div><div><div class="notif-text">التصويت على أحسن هدف الأسبوع مفتوح!</div><div class="notif-time">منذ ساعتين</div></div></div>
+    <div class="notif-item unread"><div class="notif-icon">🎁</div><div><div class="notif-text">متجر النقاط: جوائز جديدة متاحة!</div><div class="notif-time">منذ 3 ساعات</div></div></div>
+    <div class="notif-item"><div class="notif-icon">🎉</div><div><div class="notif-text">فزت ضد Coach_Ali 4-1! +3 نقاط</div><div class="notif-time">أمس</div></div></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="edit-modal">
+  <div class="modal-overlay" onclick="closeEditModal()"></div>
+  <div class="modal-box">
+    <div class="modal-title">✏️ تعديل البروفايل</div>
+    <input class="modal-input" id="edit-name" placeholder="اسم اللاعب">
+    <input class="modal-input" id="edit-emoji" placeholder="الإيموجي (مثلاً: 🎮)">
+    <div class="modal-btns">
+      <button class="btn-close-modal" onclick="closeEditModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveProfile()">حفظ ✅</button>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYER CARD MODAL -->
+<div id="profile-modal">
+  <div class="modal-overlay" onclick="closeProfileModal()"></div>
+  <div class="modal-box" style="max-width:300px">
+    <div class="player-card-wrap" style="margin-bottom:0">
+      <div class="pc-avatar" id="modal-avatar">F</div>
+      <div class="pc-name" id="modal-name">FootballKing</div>
+      <div class="pc-rank" id="modal-rank">🥇 Gold • فوز 89%</div>
+      <div class="pc-stats">
+        <div class="pc-stat"><div class="pc-stat-val" id="modal-pts">24</div><div class="pc-stat-label">نقاط</div></div>
+        <div class="pc-stat"><div class="pc-stat-val" id="modal-win">89%</div><div class="pc-stat-label">فوز%</div></div>
+        <div class="pc-stat"><div class="pc-stat-val" id="modal-goals">32</div><div class="pc-stat-label">أهداف</div></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-save" style="flex:1" onclick="closeProfileModal()">إغلاق</button>
+        <button class="share-card-btn" style="flex:1" onclick="closeProfileModal()">📤 شارك</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let users=JSON.parse(localStorage.getItem('efa_users')||'[]');
+let currentUser=JSON.parse(localStorage.getItem('efa_current')||'null');
+let messages=JSON.parse(localStorage.getItem('efa_msgs')||'{}');
+let currentChat=null;
+let isDark=localStorage.getItem('efa_dark')!=='false';
+let currentLang=localStorage.getItem('efa_lang')||'ar';
+const langs={ar:'AR',fr:'FR',en:'EN'};
+const defaultMsgs={
+  'Ahmed_TN':[{from:'them',text:'السلام! جاهز للمباراة؟ 🎮',time:'09:28'},{from:'them',text:'ردّ علي متى ما عندك وقت',time:'09:32'}],
+  'Gamer_Slim':[{from:'me',text:'وقتاش نلعبو؟',time:'20:10'},{from:'them',text:'ممتاز! نتقابلو الساعة 8 ✅',time:'20:15'}],
+  'FootballKing_22':[{from:'them',text:'بطولة M20 تبدأ الأسبوع القادم 🏆',time:'الإثنين'}],
+  'Coach_Ali':[{from:'them',text:'تهانينا على الفوز! 🎉',time:'الأحد'}]
+};
+
+// LOADING
+window.addEventListener('load',()=>setTimeout(()=>document.getElementById('loading-screen').classList.add('hidden'),2800));
+
+// THEME
+function applyTheme(){document.body.classList.toggle('light',!isDark);document.querySelector('.theme-btn').textContent=isDark?'🌙':'☀️';}
+function toggleTheme(){isDark=!isDark;localStorage.setItem('efa_dark',isDark);applyTheme();}
+applyTheme();
+
+// LANG
+function cycleLang(){const o=['ar','fr','en'];currentLang=o[(o.indexOf(currentLang)+1)%3];localStorage.setItem('efa_lang',currentLang);document.querySelector('.lang-btn').textContent='🌍 '+langs[currentLang];}
+
+// COUNTDOWN
+const target=new Date(Date.now()+3*24*60*60*1000);
+function updateCountdown(){
+  const diff=target-new Date();
+  if(diff<=0)return;
+  document.getElementById('cd-days').textContent=String(Math.floor(diff/86400000)).padStart(2,'0');
+  document.getElementById('cd-hours').textContent=String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
+  document.getElementById('cd-mins').textContent=String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  document.getElementById('cd-secs').textContent=String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+}
+setInterval(updateCountdown,1000);updateCountdown();
+
+// CHALLENGE TIMER
+function updateChallengeTimer(){
+  const now=new Date(),midnight=new Date(now);
+  midnight.setHours(23,59,59,999);
+  const diff=midnight-now;
+  const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+  const el=document.getElementById('challenge-timer');
+  if(el)el.textContent=`ينتهي في: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+setInterval(updateChallengeTimer,1000);updateChallengeTimer();
+
+// CONFETTI
+function launchConfetti(){
+  const colors=['#f5c518','#22c55e','#3b82f6','#ef4444','#f97316','#7c3aed'];
+  for(let i=0;i<45;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    c.style.left=Math.random()*100+'vw';c.style.top='-20px';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.width=(Math.random()*10+6)+'px';c.style.height=(Math.random()*10+6)+'px';
+    c.style.animationDelay=Math.random()+'s';c.style.animationDuration=(Math.random()*2+2)+'s';
+    c.style.borderRadius=Math.random()>.5?'50%':'2px';
+    document.body.appendChild(c);setTimeout(()=>c.remove(),4000);
+  }
+}
+
+// CHALLENGE
+function completeChallenge(id,pts){
+  const el=document.getElementById(id);
+  if(el.classList.contains('done'))return;
+  el.classList.add('done');
+  el.querySelector('.challenge-check').textContent='✅';
+  el.querySelector('.ch-fill').style.width='100%';
+  launchConfetti();
+  showToast('🎉 أحسنت! ربحت '+pts+' نقطة!');
+}
+
+// VOTE
+let voted=false;
+function doVote(id,pct){
+  if(voted)return;voted=true;
+  document.getElementById('v'+id).classList.add('voted');
+  showToast('🗳️ تم تسجيل صوتك!');
+}
+
+// DRAW
+function doDraw(){
+  const players=['FootballKing','Gamer_Slim','Ahmed_TN','Coach_Ali','Maher_PES','Yassine_M','Ali_G','Sami_TN'];
+  const shuffled=[...players].sort(()=>Math.random()-.5);
+  const g1=shuffled.slice(0,4),g2=shuffled.slice(4,8);
+  const res=document.getElementById('draw-result');
+  res.style.display='block';
+  res.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+    <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px">🟢 المجموعة A</div>
+      ${g1.map(p=>`<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">${p}</div>`).join('')}
+    </div>
+    <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:6px">🔵 المجموعة B</div>
+      ${g2.map(p=>`<div style="font-size:11px;padding:3px 0;border-bottom:1px solid var(--border)">${p}</div>`).join('')}
+    </div>
+  </div>`;
+  launchConfetti();
+}
+
+// STORE
+function buyItem(name,pts){
+  showToast('🎁 تم شراء '+name+'! -'+pts+' نقطة');
+  launchConfetti();
+}
+
+// INVITE
+function copyCode(){
+  const code=document.getElementById('invite-code').textContent;
+  navigator.clipboard.writeText('انضم لـ eFootball Arena عبر كودي: '+code+' - https://efootball-arena.com').catch(()=>{});
+  showToast('📋 تم نسخ الكود!');
+}
+function shareWA(){
+  const code=document.getElementById('invite-code')?.textContent||'EFA-0000';
+  window.open('https://wa.me/?text='+encodeURIComponent('🎮 انضم لـ eFootball Arena! استخدم كودي: '+code+' وربح نقاط مجانية 🏆\nhttps://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6'),'_blank');
+}
+
+// PLAYER CARD
+function showPlayerCard(name,av,cls,win,pts,goals){
+  document.getElementById('modal-avatar').textContent=av;
+  document.getElementById('modal-avatar').className='pc-avatar '+cls;
+  document.getElementById('modal-name').textContent=name;
+  document.getElementById('modal-rank').textContent='🎮 فوز '+win;
+  document.getElementById('modal-pts').textContent=pts;
+  document.getElementById('modal-win').textContent=win;
+  document.getElementById('modal-goals').textContent=goals;
+  document.getElementById('profile-modal').classList.add('open');
+}
+function closeProfileModal(){document.getElementById('profile-modal').classList.remove('open');}
+function shareMyCard(){
+  const name=currentUser?currentUser.name:'اللاعب';
+  navigator.share?navigator.share({title:'بطاقة '+name,text:'شوف إحصائياتي على eFootball Arena! 🏆',url:'https://efootball-arena.netlify.app'}):showToast('📤 تم نسخ رابط البطاقة!');
+}
+
+// TOAST
+function showToast(msg){
+  const t=document.getElementById('sound-notif');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',2500);
+}
+
+// AUTH
+function switchAuthTab(tab,btn){
+  document.querySelectorAll('.auth-tab-btn').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
+  document.getElementById(tab==='login'?'login-form':'register-form').classList.add('active');
+}
+function togglePass(id){const el=document.getElementById(id);el.type=el.type==='password'?'text':'password';}
+function showError(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
+function showSuccess(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function doGoogleLogin(){
+  const name=prompt('أدخل اسمك (للتجربة):');
+  if(!name||!name.trim())return;
+  currentUser={id:Date.now(),name:name.trim(),email:name.trim().toLowerCase().replace(/\s/g,'')+'@gmail.com',avatar:name.trim()[0].toUpperCase()};
+  localStorage.setItem('efa_current',JSON.stringify(currentUser));loginSuccess();
+}
+function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  if(!name||!email||!pass)return showError('reg-error','⚠️ كمّل جميع الحقول');
+  if(pass!==pass2)return showError('reg-error','⚠️ كلمة المرور غير متطابقة');
+  if(pass.length<6)return showError('reg-error','⚠️ كلمة المرور قصيرة جداً');
+  if(users.find(u=>u.email===email))return showError('reg-error','⚠️ هذا الإيميل مسجّل بالفعل');
+  const user={id:Date.now(),name,email,pass,avatar:name[0].toUpperCase()};
+  users.push(user);localStorage.setItem('efa_users',JSON.stringify(users));
+  showSuccess('reg-success','✅ تم إنشاء الحساب!');
+  setTimeout(()=>switchAuthTab('login',document.querySelectorAll('.auth-tab-btn')[0]),1500);
+}
+function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  if(email==='demo@efa.com'&&pass==='123456'){currentUser={id:1,name:'Demo Player',email,avatar:'D'};loginSuccess();return;}
+  const user=users.find(u=>u.email===email&&u.pass===pass);
+  if(!user)return showError('login-error','⚠️ الإيميل أو كلمة المرور غلط');
+  currentUser=user;loginSuccess();
+}
+function loginSuccess(){
+  localStorage.setItem('efa_current',JSON.stringify(currentUser));
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  updateUI();
+}
+function doLogout(){
+  currentUser=null;localStorage.removeItem('efa_current');
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+}
+function updateUI(){
+  if(!currentUser)return;
+  const av=currentUser.avatar;
+  const name=currentUser.name;
+  document.getElementById('user-avatar-btn').textContent=av;
+  document.getElementById('stats-avatar').innerHTML=av+'<div class="avatar-edit">✏️</div>';
+  document.getElementById('stats-name').textContent=name;
+  document.getElementById('stats-id').textContent='ID: #'+currentUser.id+' • موبايل';
+  document.getElementById('header-pts').textContent='🏅 18 pts';
+  document.getElementById('cl-av').textContent=av;
+  document.getElementById('cl-name').textContent=name;
+  document.getElementById('cmp-av').textContent=av;
+  document.getElementById('cmp-name').textContent=name;
+  document.getElementById('pc-avatar').textContent=av;
+  document.getElementById('pc-name').textContent=name;
+  ['rn1','rn2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=name;});
+  if(document.getElementById('br-me'))document.getElementById('br-me').innerHTML=name+' <span class="bracket-score">3</span>';
+  if(document.getElementById('br-me2'))document.getElementById('br-me2').innerHTML=name+' <span class="bracket-score">2</span>';
+  const code='EFA-'+String(currentUser.id).slice(-4).padStart(4,'0');
+  if(document.getElementById('invite-code'))document.getElementById('invite-code').textContent=code;
+}
+
+// NAV
+function showTab(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const sec=document.getElementById('sec-'+name);
+  if(sec)sec.classList.add('active');
+  const tabs=['home','tournaments','results','challenges','friendly','messages','store','stats'];
+  const idx=tabs.indexOf(name);
+  if(idx>=0)document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+function filterTab(el){document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+
+// NOTIF
+function toggleNotif(){document.getElementById('notif-panel').classList.toggle('open');document.getElementById('notif-count').style.display='none';}
+
+// CHAT
+function openChat(name,dot){
+  currentChat=name;
+  document.getElementById('chat-name').textContent=name;
+  document.getElementById('chat-status').textContent=dot+(dot==='🟢'?' متصل الآن':dot==='🟡'?' منذ ساعة':' غير متصل');
+  document.getElementById('chat-avatar').textContent=name[0].toUpperCase();
+  if(!messages[name])messages[name]=defaultMsgs[name]||[];
+  renderMsgs();
+  document.getElementById('chat-screen').classList.add('open');
+  setTimeout(()=>{const m=document.getElementById('chat-messages');m.scrollTop=m.scrollHeight;},100);
+}
+function closeChat(){document.getElementById('chat-screen').classList.remove('open');currentChat=null;}
+function renderMsgs(){
+  const c=document.getElementById('chat-messages');
+  c.innerHTML=(messages[currentChat]||[]).map(m=>`<div class="msg-bubble ${m.from==='me'?'sent':'received'}">${m.text}<div class="msg-time">${m.time}</div></div>`).join('');
+  c.scrollTop=c.scrollHeight;
+}
+function sendMsg(){
+  const inp=document.getElementById('chat-input');
+  const txt=inp.value.trim();if(!txt||!currentChat)return;
+  const now=new Date(),time=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  if(!messages[currentChat])messages[currentChat]=[];
+  messages[currentChat].push({from:'me',text:txt,time});
+  localStorage.setItem('efa_msgs',JSON.stringify(messages));
+  inp.value='';renderMsgs();
+  setTimeout(()=>{
+    const r=['👍 واش!','جاهز! 🎮','حسناً نتقابلو ✅','مزيان 👏','⚽ هيا!','سنلعب قريباً 🔥','إنشاء الله الأفضل فوق 💪','3-0 ماشي 😄'][Math.floor(Math.random()*8)];
+    messages[currentChat].push({from:'them',text:r,time});
+    localStorage.setItem('efa_msgs',JSON.stringify(messages));
+    renderMsgs();showToast('🔔 رسالة جديدة من '+currentChat+'!');
+  },1200);
+}
+function openNewChat(){const n=prompt('اكتب اسم اللاعب:');if(n&&n.trim())openChat(n.trim(),'🔴');}
+
+// PROFILE EDIT
+function openEditModal(){if(!currentUser)return;document.getElementById('edit-name').value=currentUser.name;document.getElementById('edit-modal').classList.add('open');}
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');}
+function saveProfile(){
+  const name=document.getElementById('edit-name').value.trim();if(!name)return;
+  currentUser.name=name;currentUser.avatar=name[0].toUpperCase();
+  localStorage.setItem('efa_current',JSON.stringify(currentUser));
+  updateUI();closeEditModal();showToast('✅ تم حفظ البروفايل!');
+}
+
+// ===== SUPABASE =====
+const SUPABASE_URL = 'https://hiqxyslhkjxqotjkfirr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_brBzpO6J8NdAv-zsWgV1Rw_s9BdC58Q';
+
+// Load Supabase SDK
+const supabaseScript = document.createElement('script');
+supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+supabaseScript.onload = async () => {
+  window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Check existing session
+  const { data: { session } } = await window._sb.auth.getSession();
+  if (session) {
+    currentUser = {
+      id: session.user.id,
+      name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+      email: session.user.email,
+      avatar: (session.user.user_metadata?.full_name || session.user.email)[0].toUpperCase()
+    };
+    localStorage.setItem('efa_current', JSON.stringify(currentUser));
+    loginSuccess();
+  } else {
+    showAuthHint();
+  }
+
+  // Listen for auth changes
+  window._sb.auth.onAuthStateChange((_event, session) => {
+    if (session && !currentUser) {
+      currentUser = {
+        id: session.user.id,
+        name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+        email: session.user.email,
+        avatar: (session.user.user_metadata?.full_name || session.user.email)[0].toUpperCase()
+      };
+      localStorage.setItem('efa_current', JSON.stringify(currentUser));
+      loginSuccess();
+    }
+  });
+};
+document.head.appendChild(supabaseScript);
+
+function showAuthHint() {
+  const existing = document.getElementById('auth-hint');
+  if (existing) return;
+  const hint = document.createElement('div');
+  hint.id = 'auth-hint';
+  hint.style = 'text-align:center;margin-top:12px;font-size:11px;color:#64748b;';
+  hint.innerHTML = '🔑 تجريبي: <span style="color:var(--yellow)">demo@efa.com</span> / <span style="color:var(--yellow)">123456</span>';
+  const box = document.querySelector('.auth-box');
+  if (box) box.appendChild(hint);
+}
+
+// Override Google login with real Supabase OAuth
+async function doGoogleLogin() {
+  if (window._sb) {
+    const { error } = await window._sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+    if (error) showToast('❌ خطأ: ' + error.message);
+  } else {
+    // Fallback
+    const name = prompt('أدخل اسمك (للتجربة):');
+    if (!name || !name.trim()) return;
+    currentUser = { id: Date.now(), name: name.trim(), email: name.trim() + '@gmail.com', avatar: name.trim()[0].toUpperCase() };
+    localStorage.setItem('efa_current', JSON.stringify(currentUser));
+    loginSuccess();
+  }
+}
+
+// Override login with Supabase
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!email || !pass) return showError('login-error', '⚠️ كمّل جميع الحقول');
+
+  // Demo account
+  if (email === 'demo@efa.com' && pass === '123456') {
+    currentUser = { id: 1, name: 'Demo Player', email, avatar: 'D' };
+    loginSuccess(); return;
+  }
+
+  if (window._sb) {
+    const { data, error } = await window._sb.auth.signInWithPassword({ email, password: pass });
+    if (error) return showError('login-error', '⚠️ الإيميل أو كلمة المرور غلط');
+    currentUser = {
+      id: data.user.id,
+      name: data.user.user_metadata?.username || email.split('@')[0],
+      email,
+      avatar: (data.user.user_metadata?.username || email)[0].toUpperCase()
+    };
+    localStorage.setItem('efa_current', JSON.stringify(currentUser));
+    loginSuccess();
+  } else {
+    // Fallback local
+    const user = users.find(u => u.email === email && u.pass === pass);
+    if (!user) return showError('login-error', '⚠️ الإيميل أو كلمة المرور غلط');
+    currentUser = user; loginSuccess();
+  }
+}
+
+// Override register with Supabase
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  if (!name || !email || !pass) return showError('reg-error', '⚠️ كمّل جميع الحقول');
+  if (pass !== pass2) return showError('reg-error', '⚠️ كلمة المرور غير متطابقة');
+  if (pass.length < 6) return showError('reg-error', '⚠️ كلمة المرور قصيرة جداً');
+
+  if (window._sb) {
+    const { error } = await window._sb.auth.signUp({
+      email, password: pass,
+      options: { data: { username: name, full_name: name } }
+    });
+    if (error) return showError('reg-error', '⚠️ ' + error.message);
+    showSuccess('reg-success', '✅ تم إنشاء الحساب! تحقق من إيميلك لتأكيد الحساب');
+  } else {
+    if (users.find(u => u.email === email)) return showError('reg-error', '⚠️ هذا الإيميل مسجّل بالفعل');
+    const user = { id: Date.now(), name, email, pass, avatar: name[0].toUpperCase() };
+    users.push(user); localStorage.setItem('efa_users', JSON.stringify(users));
+    showSuccess('reg-success', '✅ تم إنشاء الحساب!');
+    setTimeout(() => switchAuthTab('login', document.querySelectorAll('.auth-tab-btn')[0]), 1500);
+  }
+}
+
+// Override logout
+async function doLogout() {
+  if (window._sb) await window._sb.auth.signOut();
+  currentUser = null;
+  localStorage.removeItem('efa_current');
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// INIT - check localStorage first while Supabase loads
+const savedUser = JSON.parse(localStorage.getItem('efa_current') || 'null');
+if (savedUser) {
+  currentUser = savedUser;
+  loginSuccess();
+} else {
+  showAuthHint();
+}
+</script>
+</body>
+</html>
+<!-- ========== ADDITIONS INJECTED ========== -->
+<style>
+/* PAGE TRANSITION */
+.section{animation:none;}
+.section.active{animation:pageSlide .4s cubic-bezier(.4,0,.2,1);}
+@keyframes pageSlide{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+
+/* WELCOME SCREEN */
+#welcome-overlay{position:fixed;inset:0;background:#0a0e1a;z-index:8000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;animation:fadeOut 1s ease 2.5s forwards;}
+@keyframes fadeOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+.welcome-logo{background:var(--yellow);border-radius:16px;padding:12px 30px;margin-bottom:12px;animation:logopulse 1.5s ease-in-out infinite;}
+.welcome-logo span{font-size:28px;font-weight:900;color:#111;letter-spacing:2px;}
+.welcome-msg{font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;text-align:center;}
+.welcome-sub{font-size:13px;color:#64748b;text-align:center;margin-bottom:30px;}
+.welcome-dots{display:flex;gap:8px;}
+.welcome-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);}
+.welcome-dot.active{background:var(--yellow);animation:logopulse 1s ease-in-out infinite;}
+
+/* WIN CELEBRATION */
+#win-overlay{position:fixed;inset:0;z-index:7000;pointer-events:none;display:none;}
+#win-overlay.show{display:flex;align-items:center;justify-content:center;}
+.win-msg{background:linear-gradient(135deg,#1a3a1a,#166534);border:2px solid var(--green);border-radius:20px;padding:28px 32px;text-align:center;animation:winPop .5s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes winPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.win-emoji{font-size:52px;display:block;margin-bottom:8px;}
+.win-title{font-size:22px;font-weight:900;color:var(--green);}
+.win-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+
+/* SEARCH GLOBAL */
+#global-search-overlay{position:fixed;inset:0;z-index:500;display:none;}
+#global-search-overlay.open{display:block;}
+.gs-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);}
+.gs-box{position:absolute;top:60px;left:12px;right:12px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px;max-height:70vh;overflow-y:auto;}
+.gs-input{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);width:100%;outline:none;margin-bottom:12px;}
+.gs-input:focus{border-color:var(--yellow);}
+.gs-result{padding:10px 12px;border-radius:10px;background:var(--card);margin-bottom:7px;cursor:pointer;transition:border-color .2s;border:1px solid var(--border);}
+.gs-result:hover{border-color:var(--yellow);}
+.gs-result-title{font-size:13px;font-weight:700;}
+.gs-result-sub{font-size:11px;color:var(--muted);}
+
+/* CHART */
+.chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.chart-title{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:14px;}
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:100px;padding-bottom:4px;}
+.chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;transition:height .8s ease;min-height:4px;}
+.chart-bar.win{background:linear-gradient(180deg,var(--green),#16a34a);}
+.chart-bar.lose{background:linear-gradient(180deg,var(--red),#b91c1c);}
+.chart-bar.goal{background:linear-gradient(180deg,var(--yellow),#f97316);}
+.chart-label{font-size:9px;color:var(--muted);text-align:center;}
+.chart-val{font-size:10px;font-weight:700;color:var(--text);}
+.chart-legend{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;}
+.chart-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+.chart-leg-dot{width:10px;height:10px;border-radius:2px;}
+
+/* PERFORMANCE COMPARE */
+.perf-compare{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.perf-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.perf-row:last-child{border-bottom:none;}
+.perf-label{font-size:12px;color:var(--muted);}
+.perf-vals{display:flex;gap:16px;}
+.perf-val{font-size:13px;font-weight:700;}
+.perf-up{color:var(--green);}
+.perf-down{color:var(--red);}
+.perf-same{color:var(--muted);}
+
+/* COMMENTS */
+.comment-input-wrap{display:flex;gap:8px;margin-bottom:12px;}
+.comment-input{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:9px 14px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);outline:none;}
+.comment-input:focus{border-color:var(--yellow);}
+.comment-send{background:var(--yellow);color:#000;border:none;width:36px;height:36px;border-radius:50%;font-size:14px;cursor:pointer;flex-shrink:0;}
+.comment-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px;margin-bottom:8px;}
+.comment-header{display:flex;justify-content:space-between;margin-bottom:5px;}
+.comment-author{font-size:12px;font-weight:700;color:var(--yellow);}
+.comment-time{font-size:10px;color:var(--muted);}
+.comment-text{font-size:12px;line-height:1.5;}
+.comment-actions{display:flex;gap:12px;margin-top:6px;}
+.comment-action{font-size:11px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Cairo',sans-serif;}
+.comment-action:hover{color:var(--yellow);}
+
+/* RATING */
+.rating-wrap{display:flex;gap:4px;}
+.star{font-size:20px;cursor:pointer;transition:transform .2s;}
+.star:hover{transform:scale(1.2);}
+.star.filled{filter:none;}
+.star.empty{filter:grayscale(1) opacity(.4);}
+.rating-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.rating-player{display:flex;align-items:center;gap:10px;}
+.rating-avg{font-size:14px;font-weight:700;color:var(--yellow);}
+
+/* 1v1 CHALLENGE */
+.challenge1v1-card{background:linear-gradient(135deg,#1a1a3e,#2d1b69);border:1px solid rgba(124,58,237,.4);border-radius:14px;padding:14px;margin-bottom:10px;}
+.challenge1v1-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.challenge1v1-title{font-size:13px;font-weight:700;color:#a78bfa;}
+.challenge1v1-badge{background:rgba(124,58,237,.2);color:#a78bfa;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;border:1px solid rgba(124,58,237,.3);}
+.challenge1v1-match{display:flex;align-items:center;justify-content:space-between;}
+.challenge1v1-player{text-align:center;flex:1;}
+.challenge1v1-name{font-size:12px;font-weight:700;margin-bottom:4px;}
+.challenge1v1-stat{font-size:10px;color:var(--muted);}
+.challenge1v1-vs{font-size:16px;font-weight:900;color:rgba(124,58,237,.7);}
+.btn-accept{background:var(--green);color:#fff;font-weight:700;font-size:11px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;}
+.btn-decline{background:rgba(239,68,68,.15);color:var(--red);font-weight:700;font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid var(--red);cursor:pointer;font-family:'Cairo',sans-serif;}
+
+/* FORUM */
+.forum-post{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:9px;cursor:pointer;transition:border-color .2s;}
+.forum-post:hover{border-color:var(--yellow);}
+.forum-post-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.forum-post-title{font-size:13px;font-weight:700;}
+.forum-post-meta{font-size:10px;color:var(--muted);margin-bottom:5px;}
+.forum-post-preview{font-size:11px;color:var(--muted);line-height:1.5;}
+.forum-post-footer{display:flex;gap:12px;margin-top:8px;}
+.forum-stat{font-size:11px;color:var(--muted);}
+
+/* WIN PREDICTOR */
+.predictor-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.predictor-title{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--yellow);}
+.predictor-vs{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.predictor-player{flex:1;text-align:center;}
+.predictor-name{font-size:12px;font-weight:700;margin-bottom:4px;}
+.predictor-bar-wrap{margin-bottom:8px;}
+.predictor-bar{height:10px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden;display:flex;}
+.predictor-fill-a{height:100%;background:linear-gradient(90deg,var(--blue),#60a5fa);border-radius:5px 0 0 5px;transition:width 1s ease;}
+.predictor-fill-b{height:100%;background:linear-gradient(90deg,#f97316,var(--yellow));border-radius:0 5px 5px 0;transition:width 1s ease;}
+.predictor-pcts{display:flex;justify-content:space-between;font-size:11px;font-weight:700;}
+
+/* FILTER ADVANCED */
+.advanced-filter{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;display:none;}
+.advanced-filter.open{display:block;}
+.filter-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.filter-select{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);outline:none;cursor:pointer;}
+
+/* HISTORY */
+.history-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.history-date{font-size:10px;color:var(--muted);width:50px;flex-shrink:0;text-align:center;}
+.history-match{flex:1;}
+.history-teams{font-size:12px;font-weight:700;}
+.history-detail{font-size:10px;color:var(--muted);}
+.history-result{font-size:14px;font-weight:900;width:40px;text-align:center;}
+</style>
+
+<!-- WELCOME OVERLAY -->
+<div id="welcome-overlay" style="display:none">
+  <div class="welcome-logo"><span>eFootball Arena</span></div>
+  <div style="font-size:36px;margin:14px 0;">🎮</div>
+  <div class="welcome-msg" id="welcome-msg">أهلاً بك! 👋</div>
+  <div class="welcome-sub">منصة bطولات eFootball الرسمية</div>
+  <div class="welcome-dots">
+    <div class="welcome-dot active"></div>
+    <div class="welcome-dot"></div>
+    <div class="welcome-dot"></div>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div id="win-overlay">
+  <div class="win-msg">
+    <span class="win-emoji">🏆</span>
+    <div class="win-title">فزت بالبطولة!</div>
+    <div class="win-sub">تهانينا! أنت البطل 🥇</div>
+  </div>
+</div>
+
+<!-- GLOBAL SEARCH -->
+<div id="global-search-overlay">
+  <div class="gs-backdrop" onclick="closeSearch()"></div>
+  <div class="gs-box">
+    <input class="gs-input" id="gs-input" placeholder="🔎 ابحث عن لاعب، بطولة، نتيجة..." oninput="doSearch(this.value)" autofocus>
+    <div id="gs-results"></div>
+  </div>
+</div>
+
+<script>
+// WELCOME
+function showWelcome(name){
+  const ov=document.getElementById('welcome-overlay');
+  document.getElementById('welcome-msg').textContent='أهلاً '+name+'! 👋';
+  ov.style.display='flex';
+  setTimeout(()=>{ov.style.display='none';},3500);
+}
+
+// WIN CELEBRATION
+function showWinCelebration(){
+  const ov=document.getElementById('win-overlay');
+  ov.classList.add('show');
+  launchConfetti();
+  setTimeout(()=>ov.classList.remove('show'),3000);
+}
+
+// GLOBAL SEARCH
+function openSearch(){
+  document.getElementById('global-search-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('gs-input').focus(),100);
+}
+function closeSearch(){document.getElementById('global-search-overlay').classList.remove('open');}
+const searchData=[
+  {title:'بطولة M20',sub:'التسجيل مفتوح • 11/16 لاعب',tab:'tournaments',icon:'🏆'},
+  {title:'بطولة M19',sub:'جارية • 16/16 لاعب',tab:'tournaments',icon:'🏆'},
+  {title:'بطولة M21',sub:'قريباً • 3/16 لاعب',tab:'tournaments',icon:'🏆'},
+  {title:'FootballKing_22',sub:'فوز 89% • 24 نقطة',tab:'friendly',icon:'👤'},
+  {title:'Ahmed_TN',sub:'فوز 72% • 19 نقطة',tab:'friendly',icon:'👤'},
+  {title:'Gamer_Slim',sub:'فوز 58% • 21 نقطة',tab:'friendly',icon:'👤'},
+  {title:'تحديات اليوم',sub:'اربح 75 نقطة',tab:'challenges',icon:'🎯'},
+  {title:'متجر النقاط',sub:'6 جوائز متاحة',tab:'store',icon:'🏪'},
+  {title:'Classement',sub:'ترتيب اللاعبين',tab:'results',icon:'📋'},
+  {title:'مباراة ودية',sub:'ابحث عن خصم',tab:'friendly',icon:'⚽'},
+  {title:'الإشعارات',sub:'5 إشعارات جديدة',tab:'',icon:'🔔'},
+  {title:'ادعو أصدقاء',sub:'اربح 20 نقطة لكل دعوة',tab:'invite',icon:'👥'},
+];
+function doSearch(q){
+  const res=document.getElementById('gs-results');
+  if(!q.trim()){res.innerHTML='';return;}
+  const found=searchData.filter(d=>d.title.includes(q)||d.sub.includes(q));
+  if(!found.length){res.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">لا نتائج 😔</div>';return;}
+  res.innerHTML=found.map(d=>`<div class="gs-result" onclick="closeSearch();${d.tab?'showTab(\''+d.tab+'\')':''}">`+
+    `<div class="gs-result-title">${d.icon} ${d.title}</div><div class="gs-result-sub">${d.sub}</div></div>`).join('');
+}
+
+// INJECT SEARCH BUTTON IN HEADER
+document.addEventListener('DOMContentLoaded',()=>{});
+(function(){
+  const hr=document.querySelector('.header-right');
+  if(hr){
+    const sb=document.createElement('button');
+    sb.className='icon-btn';sb.textContent='🔍';sb.title='بحث';
+    sb.onclick=openSearch;
+    hr.insertBefore(sb,hr.firstChild);
+  }
+})();
+
+// ADD NEW TABS AND SECTIONS DYNAMICALLY
+(function(){
+  const tabsEl=document.querySelector('.tabs');
+  const mainEl=document.querySelector('main');
+  if(!tabsEl||!mainEl)return;
+
+  // Extra tabs
+  const extraTabs=[
+    {id:'analytics',icon:'📈',label:'تحليل'},
+    {id:'forum',icon:'💭',label:'منتدى'},
+    {id:'history',icon:'📜',label:'تاريخ'},
+    {id:'challenges1v1',icon:'⚔️',label:'تحديات 1v1'},
+  ];
+  extraTabs.forEach(t=>{
+    const btn=document.createElement('button');
+    btn.className='tab';
+    btn.innerHTML=`<span class="tab-icon">${t.icon}</span>${t.label}`;
+    btn.onclick=()=>showTab(t.id);
+    tabsEl.appendChild(btn);
+  });
+
+  // ANALYTICS SECTION
+  const analytics=document.createElement('div');
+  analytics.className='section';analytics.id='sec-analytics';
+  analytics.innerHTML=`
+    <div class="chart-wrap">
+      <div class="chart-title">📈 تطور أدائك - آخر 6 أسابيع</div>
+      <div class="chart-bars" id="perf-chart">
+        ${[{w:2,l:1,g:6},{w:1,l:2,g:3},{w:3,l:0,g:9},{w:2,l:1,g:7},{w:1,l:2,g:4},{w:3,l:0,g:8}].map((d,i)=>`
+          <div class="chart-bar-wrap">
+            <div class="chart-val">${d.w}/${d.l}</div>
+            <div class="chart-bar win" style="height:${d.w*25}px"></div>
+            <div class="chart-label">أ${i+1}</div>
+          </div>`).join('')}
+      </div>
+      <div class="chart-legend">
+        <div class="chart-leg-item"><div class="chart-leg-dot" style="background:var(--green)"></div>فوز</div>
+        <div class="chart-leg-item"><div class="chart-leg-dot" style="background:var(--yellow)"></div>أهداف</div>
+      </div>
+    </div>
+    <div class="perf-compare">
+      <div class="section-title">📊 مقارنة مع الأسبوع الماضي</div>
+      <div class="perf-row"><div class="perf-label">الفوز</div><div class="perf-vals"><span class="perf-val perf-up">+2 ↑</span><span class="perf-val" style="color:var(--muted)">هذا الأسبوع: 3</span></div></div>
+      <div class="perf-row"><div class="perf-label">الأهداف</div><div class="perf-vals"><span class="perf-val perf-up">+5 ↑</span><span class="perf-val" style="color:var(--muted)">هذا الأسبوع: 8</span></div></div>
+      <div class="perf-row"><div class="perf-label">نسبة الفوز</div><div class="perf-vals"><span class="perf-val perf-up">+15% ↑</span><span class="perf-val" style="color:var(--muted)">67% → 82%</span></div></div>
+      <div class="perf-row"><div class="perf-label">الأهداف المستقبلة</div><div class="perf-vals"><span class="perf-val perf-down">+2 ↓</span><span class="perf-val" style="color:var(--muted)">هذا الأسبوع: 4</span></div></div>
+      <div class="perf-row"><div class="perf-label">النقاط</div><div class="perf-vals"><span class="perf-val perf-up">+6 ↑</span><span class="perf-val" style="color:var(--muted)">18 نقطة</span></div></div>
+    </div>
+    <div class="predictor-card">
+      <div class="predictor-title">🤖 توقع الفوز قبل المباراة</div>
+      <div class="predictor-vs">
+        <div class="predictor-player"><div class="predictor-name" id="pred-me">أنت</div><div style="font-size:10px;color:var(--muted)">67% فوز</div></div>
+        <div style="font-size:14px;color:var(--muted);font-weight:700">VS</div>
+        <div class="predictor-player"><div class="predictor-name">FootballKing</div><div style="font-size:10px;color:var(--muted)">89% فوز</div></div>
+      </div>
+      <div class="predictor-bar-wrap">
+        <div class="predictor-bar">
+          <div class="predictor-fill-a" style="width:35%"></div>
+          <div class="predictor-fill-b" style="width:65%"></div>
+        </div>
+      </div>
+      <div class="predictor-pcts"><span style="color:var(--blue)">35% تفوز</span><span style="color:var(--yellow)">65% يفوز</span></div>
+    </div>`;
+  mainEl.appendChild(analytics);
+
+  // FORUM SECTION
+  const forum=document.createElement('div');
+  forum.className='section';forum.id='sec-forum';
+  forum.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="section-title" style="margin-bottom:0">💭 منتدى اللاعبين</div>
+      <button class="btn-join" onclick="newForumPost()">+ موضوع جديد</button>
+    </div>
+    <div class="forum-post">
+      <div class="forum-post-header"><div class="forum-post-title">🔥 أفضل تكتيك للفوز في M20</div><span style="font-size:10px;color:var(--green)">مثبّت</span></div>
+      <div class="forum-post-meta">FootballKing_22 • منذ يومين</div>
+      <div class="forum-post-preview">شاركوا معنا أفضل التكتيكات اللي استخدمتوها في البطولة...</div>
+      <div class="forum-post-footer"><span class="forum-stat">👁️ 124</span><span class="forum-stat">💬 18</span><span class="forum-stat">❤️ 34</span></div>
+    </div>
+    <div class="forum-post">
+      <div class="forum-post-header"><div class="forum-post-title">⚽ كيفاش تسجل من الضربات الحرة؟</div></div>
+      <div class="forum-post-meta">Ahmed_TN • منذ 3 أيام</div>
+      <div class="forum-post-preview">نجرب كثير بالضربات الحرة وما نوفقش، عندكم نصائح؟</div>
+      <div class="forum-post-footer"><span class="forum-stat">👁️ 89</span><span class="forum-stat">💬 12</span><span class="forum-stat">❤️ 21</span></div>
+    </div>
+    <div class="forum-post">
+      <div class="forum-post-header"><div class="forum-post-title">🏆 تهانينا لـ FootballKing على الفوز!</div></div>
+      <div class="forum-post-meta">Gamer_Slim • منذ أسبوع</div>
+      <div class="forum-post-preview">مبروك للبطل! لعبة احترافية في كل المباريات...</div>
+      <div class="forum-post-footer"><span class="forum-stat">👁️ 201</span><span class="forum-stat">💬 45</span><span class="forum-stat">❤️ 87</span></div>
+    </div>
+    <div class="forum-post">
+      <div class="forum-post-header"><div class="forum-post-title">❓ سؤال: كيفاش تسجل في بطولة M21؟</div></div>
+      <div class="forum-post-meta">NewPlayer_01 • منذ ساعة</div>
+      <div class="forum-post-preview">أنا جديد في المنصة، كيفاش نسجل في البطولة القادمة؟</div>
+      <div class="forum-post-footer"><span class="forum-stat">👁️ 23</span><span class="forum-stat">💬 3</span><span class="forum-stat">❤️ 5</span></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:4px;">
+      <div class="section-title" style="margin-bottom:10px">💬 التعليقات</div>
+      <div class="comment-input-wrap">
+        <input class="comment-input" id="forum-comment" placeholder="اكتب تعليقك...">
+        <button class="comment-send" onclick="addComment()">↑</button>
+      </div>
+      <div id="comments-list">
+        <div class="comment-item"><div class="comment-header"><span class="comment-author">FootballKing_22 🏆</span><span class="comment-time">منذ ساعة</span></div><div class="comment-text">مبروك للجميع! كانت بطولة ممتعة 🔥</div><div class="comment-actions"><button class="comment-action">❤️ 12</button><button class="comment-action">↩️ رد</button></div></div>
+        <div class="comment-item"><div class="comment-header"><span class="comment-author">Gamer_Slim 🔥</span><span class="comment-time">منذ 2 ساعة</span></div><div class="comment-text">نتقابلو في M21 إنشاء الله 💪</div><div class="comment-actions"><button class="comment-action">❤️ 8</button><button class="comment-action">↩️ رد</button></div></div>
+      </div>
+    </div>`;
+  mainEl.appendChild(forum);
+
+  // HISTORY SECTION
+  const history=document.createElement('div');
+  history.className='section';history.id='sec-history';
+  history.innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+      <div class="section-title" style="margin-bottom:0;flex:1">📜 تاريخ المباريات الكامل</div>
+      <button class="filter-tab active" onclick="toggleAdvFilter()">🔽 فلتر</button>
+    </div>
+    <div class="advanced-filter" id="adv-filter">
+      <div class="filter-row">
+        <select class="filter-select"><option>كل البطولات</option><option>M20</option><option>M19</option><option>ودية</option></select>
+        <select class="filter-select"><option>كل النتائج</option><option>فوز</option><option>خسارة</option><option>تعادل</option></select>
+        <select class="filter-select"><option>كل الأوقات</option><option>هذا الأسبوع</option><option>هذا الشهر</option></select>
+      </div>
+    </div>
+    <div id="history-list">
+      <div class="history-item"><div class="history-date">أمس</div><div class="history-match"><div class="history-teams" id="h-me1">أنت vs Coach_Ali</div><div class="history-detail">بطولة M19 • الجولة 9</div></div><div class="history-result score-win">4-1</div></div>
+      <div class="history-item"><div class="history-date">الأحد</div><div class="history-match"><div class="history-teams" id="h-me2">أنت vs FootballKing</div><div class="history-detail">بطولة M19 • الجولة 8</div></div><div class="history-result score-lose">2-5</div></div>
+      <div class="history-item"><div class="history-date">السبت</div><div class="history-match"><div class="history-teams" id="h-me3">أنت vs Maher_PES</div><div class="history-detail">بطولة M19 • الجولة 7</div></div><div class="history-result score-win">3-0</div></div>
+      <div class="history-item"><div class="history-date">الجمعة</div><div class="history-match"><div class="history-teams" id="h-me4">أنت vs Gamer_Slim</div><div class="history-detail">بطولة M19 • الجولة 6</div></div><div class="history-result score-win">2-1</div></div>
+      <div class="history-item"><div class="history-date">الخميس</div><div class="history-match"><div class="history-teams" id="h-me5">أنت vs Ahmed_TN</div><div class="history-detail">مباراة ودية</div></div><div class="history-result score-draw">2-2</div></div>
+      <div class="history-item"><div class="history-date">الأربعاء</div><div class="history-match"><div class="history-teams" id="h-me6">أنت vs Yassine_M</div><div class="history-detail">بطولة M19 • الجولة 5</div></div><div class="history-result score-win">4-2</div></div>
+      <div class="history-item"><div class="history-date">الثلاثاء</div><div class="history-match"><div class="history-teams" id="h-me7">أنت vs Ali_G</div><div class="history-detail">بطولة M19 • الجولة 4</div></div><div class="history-result score-lose">1-3</div></div>
+      <div class="history-item"><div class="history-date">الإثنين</div><div class="history-match"><div class="history-teams" id="h-me8">أنت vs Coach_Ali</div><div class="history-detail">مباراة ودية</div></div><div class="history-result score-win">5-1</div></div>
+    </div>`;
+  mainEl.appendChild(history);
+
+  // 1v1 CHALLENGES SECTION
+  const c1v1=document.createElement('div');
+  c1v1.className='section';c1v1.id='sec-challenges1v1';
+  c1v1.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="section-title" style="margin-bottom:0">⚔️ تحديات 1v1</div>
+      <button class="btn-join" onclick="sendChallenge()">+ تحدّي لاعب</button>
+    </div>
+    <div class="challenge1v1-card">
+      <div class="challenge1v1-header"><div class="challenge1v1-title">تحدي وارد 🔔</div><div class="challenge1v1-badge">جديد</div></div>
+      <div class="challenge1v1-match">
+        <div class="challenge1v1-player"><div class="challenge1v1-name">Ahmed_TN ⚡</div><div class="challenge1v1-stat">فوز 72% • 19 pts</div></div>
+        <div class="challenge1v1-vs">VS</div>
+        <div class="challenge1v1-player"><div class="challenge1v1-name" id="c1v1-me">أنت</div><div class="challenge1v1-stat">فوز 67% • 18 pts</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;">
+        <button class="btn-decline" onclick="this.closest('.challenge1v1-card').style.opacity='.5'">رفض</button>
+        <button class="btn-accept" onclick="acceptChallenge(this)">قبول ✅</button>
+      </div>
+    </div>
+    <div class="challenge1v1-card" style="opacity:.7">
+      <div class="challenge1v1-header"><div class="challenge1v1-title">تحدي أرسلته ⏳</div><div class="challenge1v1-badge" style="color:var(--yellow);border-color:rgba(245,197,24,.3)">في الانتظار</div></div>
+      <div class="challenge1v1-match">
+        <div class="challenge1v1-player"><div class="challenge1v1-name" id="c1v1-me2">أنت</div><div class="challenge1v1-stat">فوز 67%</div></div>
+        <div class="challenge1v1-vs">VS</div>
+        <div class="challenge1v1-player"><div class="challenge1v1-name">Gamer_Slim 🔥</div><div class="challenge1v1-stat">فوز 58%</div></div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:4px">⭐ تقييم اللاعبين</div>
+    <div class="rating-card"><div class="rating-player"><div class="conv-avatar av-green" style="width:36px;height:36px;font-size:14px">F</div><div><div style="font-size:12px;font-weight:700">FootballKing_22</div><div class="rating-avg">★ 4.8</div></div></div><div class="rating-wrap" id="rate-fk">
+      <span class="star filled" onclick="ratePlayer('rate-fk',1)">⭐</span><span class="star filled" onclick="ratePlayer('rate-fk',2)">⭐</span><span class="star filled" onclick="ratePlayer('rate-fk',3)">⭐</span><span class="star filled" onclick="ratePlayer('rate-fk',4)">⭐</span><span class="star empty" onclick="ratePlayer('rate-fk',5)">⭐</span>
+    </div></div>
+    <div class="rating-card"><div class="rating-player"><div class="conv-avatar av-blue" style="width:36px;height:36px;font-size:14px">G</div><div><div style="font-size:12px;font-weight:700">Gamer_Slim</div><div class="rating-avg">★ 4.2</div></div></div><div class="rating-wrap" id="rate-gs">
+      <span class="star filled" onclick="ratePlayer('rate-gs',1)">⭐</span><span class="star filled" onclick="ratePlayer('rate-gs',2)">⭐</span><span class="star filled" onclick="ratePlayer('rate-gs',3)">⭐</span><span class="star filled" onclick="ratePlayer('rate-gs',4)">⭐</span><span class="star empty" onclick="ratePlayer('rate-gs',5)">⭐</span>
+    </div></div>
+    <div class="rating-card"><div class="rating-player"><div class="conv-avatar av-purple" style="width:36px;height:36px;font-size:14px">A</div><div><div style="font-size:12px;font-weight:700">Ahmed_TN</div><div class="rating-avg">★ 3.9</div></div></div><div class="rating-wrap" id="rate-at">
+      <span class="star filled" onclick="ratePlayer('rate-at',1)">⭐</span><span class="star filled" onclick="ratePlayer('rate-at',2)">⭐</span><span class="star filled" onclick="ratePlayer('rate-at',3)">⭐</span><span class="star filled" onclick="ratePlayer('rate-at',4)">⭐</span><span class="star empty" onclick="ratePlayer('rate-at',5)">⭐</span>
+    </div></div>`;
+  mainEl.appendChild(c1v1);
+})();
+
+// FORUM FUNCTIONS
+function newForumPost(){
+  const title=prompt('عنوان الموضوع:');
+  if(!title||!title.trim())return;
+  const list=document.getElementById('comments-list');
+  const post=document.createElement('div');
+  post.className='comment-item';
+  const name=currentUser?currentUser.name:'أنت';
+  post.innerHTML=`<div class="comment-header"><span class="comment-author">${name}</span><span class="comment-time">الآن</span></div><div class="comment-text">${title}</div><div class="comment-actions"><button class="comment-action">❤️ 0</button><button class="comment-action">↩️ رد</button></div>`;
+  if(list)list.prepend(post);
+  showToast('✅ تم نشر موضوعك!');
+}
+
+function addComment(){
+  const inp=document.getElementById('forum-comment');
+  const txt=inp.value.trim();if(!txt)return;
+  const list=document.getElementById('comments-list');
+  const name=currentUser?currentUser.name:'أنت';
+  const item=document.createElement('div');
+  item.className='comment-item';
+  item.innerHTML=`<div class="comment-header"><span class="comment-author">${name}</span><span class="comment-time">الآن</span></div><div class="comment-text">${txt}</div><div class="comment-actions"><button class="comment-action">❤️ 0</button><button class="comment-action">↩️ رد</button></div>`;
+  if(list)list.prepend(item);
+  inp.value='';
+  showToast('💬 تم نشر تعليقك!');
+}
+
+// RATING
+function ratePlayer(id,stars){
+  const wrap=document.getElementById(id);
+  if(!wrap)return;
+  const starEls=wrap.querySelectorAll('.star');
+  starEls.forEach((s,i)=>{s.className='star '+(i<stars?'filled':'empty');});
+  showToast('⭐ تم تقييم اللاعب بـ '+stars+' نجوم!');
+}
+
+// 1v1
+function sendChallenge(){
+  const name=prompt('اكتب اسم اللاعب اللي تحب تتحداه:');
+  if(!name||!name.trim())return;
+  showToast('⚔️ تم إرسال التحدي لـ '+name.trim()+'!');
+}
+function acceptChallenge(btn){
+  btn.closest('.challenge1v1-card').style.opacity='.5';
+  launchConfetti();
+  showToast('✅ قبلت التحدي! انتظر موعد المباراة');
+}
+
+// ADVANCED FILTER
+function toggleAdvFilter(){
+  const f=document.getElementById('adv-filter');
+  if(f)f.classList.toggle('open');
+}
+
+// UPDATE HISTORY WITH USER NAME
+const origUpdateUI=window.updateUI||function(){};
+const origLoginSuccess=window.loginSuccess;
+if(origLoginSuccess){
+  window.loginSuccess=function(){
+    origLoginSuccess.call(this);
+    setTimeout(()=>{
+      const name=currentUser?currentUser.name:'اللاعب';
+      ['h-me1','h-me2','h-me3','h-me4','h-me5','h-me6','h-me7','h-me8'].forEach((id,i)=>{
+        const el=document.getElementById(id);
+        if(el){const parts=el.textContent.split(' vs ');if(parts[1])el.textContent=name+' vs '+parts[1];}
+      });
+      ['c1v1-me','c1v1-me2','pred-me'].forEach(id=>{
+        const el=document.getElementById(id);if(el)el.textContent=name;
+      });
+      // Show welcome on first login
+      const isFirst=!localStorage.getItem('efa_welcomed');
+      if(isFirst){localStorage.setItem('efa_welcomed','1');showWelcome(name);}
+    },300);
+  };
+}
+</script>
