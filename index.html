@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eFootball Arena</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+/* استعادة الستايل الأصلي الكامل الذي أرسلته أنت في البداية */
+:root{--bg:#0a0e1a;--bg2:#111827;--card:#151d2e;--card2:#1a2338;--yellow:#f5c518;--green:#22c55e;--blue:#3b82f6;--purple:#7c3aed;--red:#ef4444;--orange:#f97316;--text:#e2e8f0;--muted:#64748b;--border:#1e2d45;--gold:#c9a84c;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* LOADING SCREEN (Original) */
+#loading-screen{position:fixed;inset:0;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .7s,visibility .7s;}
+#loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.load-ball{font-size:52px;animation:spin 1.8s linear infinite;margin-bottom:18px;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.load-logo{background:var(--yellow);border-radius:14px;padding:10px 28px;margin-bottom:8px;}
+.load-logo span{font-size:24px;font-weight:900;color:#111;letter-spacing:2px;}
+
+/* AUTH BOX (Original) */
+#auth-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#0d1225;position:relative;overflow:hidden;}
+.auth-box{background:#151d2e;border:1px solid #1e2d45;border-radius:18px;padding:22px 18px;width:100%;max-width:400px;position:relative;z-index:1;}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#111;font-weight:700;font-size:14px;padding:13px;border-radius:12px;border:none;cursor:pointer;width:100%;margin-bottom:12px;font-family:'Cairo';}
+
+/* APP STYLES (Original) */
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+.user-avatar{width:35px;height:35px;border-radius:50%;background:var(--yellow);display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;cursor:pointer;overflow:hidden;}
+.user-avatar img{width:100%; height:100%; object-fit:cover;}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.tab{flex:1;min-width:60px;padding:10px 5px;text-align:center;font-size:10px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Cairo';border-bottom:2px solid transparent;}
+.tab.active{color:var(--yellow);border-bottom-color:var(--yellow);}
+
+/* SPY MODE V2 STYLE */
+.admin-spy-card{background:var(--card2);border:1px solid var(--purple);padding:10px;border-radius:10px;margin-bottom:10px;font-size:11px;}
+
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:10px;z-index:9000;display:none;font-size:12px;}
+.section{display:none;}
+.section.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:12px;}
+.input-field{background:#1a2338;border:1px solid #1e2d45;border-radius:10px;padding:11px 14px;color:#e2e8f0;width:100%;margin-bottom:10px;outline:none;font-family:'Cairo';}
+.btn-auth{background:linear-gradient(135deg,var(--yellow),#f97316);color:#000;font-weight:900;padding:13px;border-radius:10px;border:none;cursor:pointer;width:100%;font-family:'Cairo';}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="load-ball">⚽</div>
+  <div class="load-logo"><span>eFootball Arena</span></div>
+  <div class="load-txt">جاري التحميل...</div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <button class="btn-google" onclick="loginWithGoogle()">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="18">
+      المتابعة مع Google
+    </button>
+    <div style="text-align:center; color:var(--muted); margin:10px 0; font-size:12px;">أو البريد الإلكتروني</div>
+    <input class="input-field" type="email" id="login-email" placeholder="البريد الإلكتروني">
+    <input class="input-field" type="password" id="login-pass" placeholder="كلمة المرور">
+    <button class="btn-auth" onclick="doLogin()">دخول / تسجيل</button>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen" style="display:none;">
+  <header>
+    <div id="header-pts" style="color:var(--yellow); font-weight:700; font-size:12px;">🏅 0 pts</div>
+    <div class="logo">e<span>Football</span> Arena</div>
+    <div class="user-avatar" id="user-avatar-btn" onclick="showTab('stats')">A</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('home')">الرئيسية</button>
+    <button class="tab" onclick="showTab('tournaments')">البطولات</button>
+    <button class="tab" onclick="showTab('results')">النتائج</button>
+    <button class="tab" onclick="showTab('friendly')">الودية</button>
+    <button class="tab" onclick="showTab('messages')">رسائل</button>
+    <button class="tab" onclick="showTab('reports')">بلاغات</button>
+    <button class="tab" onclick="showTab('stats')">بروفايل</button>
+    <button class="tab" id="admin-tab" style="display:none" onclick="showTab('admin')">Admin</button>
+  </div>
+
+  <main style="padding:15px; max-width:500px; margin:0 auto;">
+    
+    <!-- HOME -->
+    <div class="section active" id="sec-home">
+        <div class="card" style="background:linear-gradient(135deg, #1e293b, #0f172a);">
+            <h3>مرحباً بك يا بطل ⚽</h3>
+            <p style="font-size:12px; color:var(--muted); margin-top:5px;">هنا حيث تصنع الأساطير في عالم eFootball.</p>
+        </div>
+        <!-- إضافة باقي محتوى الرئيسية هنا -->
+    </div>
+
+    <!-- TOURNAMENTS -->
+    <div class="section" id="sec-tournaments">
+        <div id="tournaments-list">تحميل البطولات...</div>
+    </div>
+
+    <!-- RESULTS (Ranking) -->
+    <div class="section" id="sec-results">
+        <div id="ranking-list">تحميل الترتيب...</div>
+    </div>
+
+    <!-- FRIENDLY -->
+    <div class="section" id="sec-friendly">
+        <input class="input-field" type="text" placeholder="🔎 ابحث عن خصم..." oninput="searchPlayers(this.value)">
+        <div id="friendly-players"></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="section" id="sec-messages">
+        <div id="messages-list">لا توجد رسائل حالياً</div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="section" id="sec-reports">
+        <div class="card">
+            <h4>🚨 إرسال بلاغ</h4>
+            <input class="input-field" id="rep-name" placeholder="اسم الخصم">
+            <textarea class="input-field" id="rep-desc" placeholder="اشرح المشكلة..."></textarea>
+            <button class="btn-auth" onclick="sendReport()">إرسال البلاغ</button>
+        </div>
+    </div>
+
+    <!-- STATS / PROFILE -->
+    <div class="section" id="sec-stats">
+        <div class="card" style="text-align:center;">
+            <div id="my-avatar-view" style="width:100px; height:100px; border-radius:50%; background:var(--yellow); margin:0 auto 10px; overflow:hidden;"></div>
+            <h3 id="my-name">اللاعب</h3>
+            <div style="margin-top:15px;">
+                <label style="font-size:12px; color:var(--yellow); display:block; margin-bottom:5px;">تغيير الصورة 📷</label>
+                <input type="file" id="avatar-input" class="input-field" accept="image/*">
+                <input type="text" id="update-name" class="input-field" placeholder="تعديل الاسم">
+                <button class="btn-auth" onclick="updateProfile()">حفظ التعديلات ✅</button>
+            </div>
+            <button class="btn-auth" style="background:var(--red); color:#fff; margin-top:10px;" onclick="logout()">خروج</button>
+        </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="section" id="sec-admin">
+        <div class="card">
+            <h4 style="color:var(--yellow)">👑 لوحة التحكم</h4>
+            <button class="btn-auth" style="background:var(--purple); color:#fff; margin-top:10px;" onclick="loadSpyMode()">وضع التجسس (Admin V2) 🕵️</button>
+            <div id="spy-area" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://hiqxyslhkjxqotjkfirr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_brBzpO6J8NdAv-zsWgV1Rw_s9BdC58Q';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser, myProfile;
+
+async function init() {
+    // إصلاح مشكلة تسجيل الدخول (فحص الجلسة فوراً)
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+        await setupApp(session.user);
+    } else {
+        document.getElementById('loading-screen').classList.add('hidden');
+    }
+
+    sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) setupApp(session.user);
+    });
+}
+
+async function setupApp(user) {
+    currentUser = user;
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
+    
+    if (!profile) {
+        const { data: newP } = await sb.from('profiles').insert({
+            id: user.id, username: user.email.split('@')[0], points: 0, email: user.email
+        }).select().single();
+        myProfile = newP;
+    } else {
+        myProfile = profile;
+    }
+
+    if (myProfile.is_admin) document.getElementById('admin-tab').style.display = 'block';
+
+    updateUI();
+    document.getElementById('loading-screen').classList.add('hidden');
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    loadTournaments();
+    loadRanking();
+    loadFriendly();
+}
+
+function updateUI() {
+    document.getElementById('header-pts').innerText = `🏅 ${myProfile.points || 0} pts`;
+    document.getElementById('my-name').innerText = myProfile.username;
+    document.getElementById('update-name').value = myProfile.username;
+    
+    const avatarHtml = myProfile.avatar_url ? 
+        `<img src="${myProfile.avatar_url}">` : 
+        `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-weight:900;">${myProfile.username[0]}</div>`;
+    
+    document.getElementById('user-avatar-btn').innerHTML = avatarHtml;
+    document.getElementById('my-avatar-view').innerHTML = avatarHtml;
+}
+
+// ميزة رفع الصورة من الجهاز
+async function updateProfile() {
+    const newName = document.getElementById('update-name').value;
+    const file = document.getElementById('avatar-input').files[0];
+    let avatarUrl = myProfile.avatar_url;
+
+    if (file) {
+        const fileName = `${currentUser.id}-${Date.now()}`;
+        const { error: uploadErr } = await sb.storage.from('avatars').upload(`public/${fileName}`, file);
+        if (!uploadErr) {
+            const { data } = sb.storage.from('avatars').getPublicUrl(`public/${fileName}`);
+            avatarUrl = data.publicUrl;
+        }
+    }
+
+    await sb.from('profiles').update({ username: newName, avatar_url: avatarUrl }).eq('id', currentUser.id);
+    location.reload();
+}
+
+async function loginWithGoogle() { await sb.auth.signInWithOAuth({ provider: 'google' }); }
+
+async function doLogin() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-pass').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) await sb.auth.signUp({ email, password });
+}
+
+function showTab(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    // ابحث عن الزر الذي تم الضغط عليه واجعله active
+}
+
+async function loadTournaments() {
+    const { data: list } = await sb.from('tournaments').select('*');
+    document.getElementById('tournaments-list').innerHTML = list.map(t => `
+        <div class="card">
+            <h4>${t.name}</h4>
+            <p style="font-size:11px;">اللاعبين: ${t.current_players}/${t.max_players}</p>
+            <button class="btn-auth" style="margin-top:10px;" onclick="joinTournament('${t.id}')">تسجيل</button>
+        </div>
+    `).join('');
+}
+
+async function joinTournament(tId) {
+    // منع التكرار
+    const { data: check } = await sb.from('tournament_participants').select('*').eq('tournament_id', tId).eq('profile_id', currentUser.id);
+    if (check && check.length > 0) return alert("أنت مسجل بالفعل!");
+
+    await sb.from('tournament_participants').insert({ tournament_id: tId, profile_id: currentUser.id });
+    alert("تم التسجيل!");
+    loadTournaments();
+}
+
+async function loadRanking() {
+    const { data: users } = await sb.from('profiles').select('*').order('points', {ascending:false});
+    document.getElementById('ranking-list').innerHTML = users.map((u, i) => `
+        <div class="card" style="display:flex; align-items:center; gap:10px;">
+            <span>#${i+1}</span>
+            <div style="width:30px; height:30px; border-radius:50%; background:var(--yellow); overflow:hidden;">
+                <img src="${u.avatar_url || ''}" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <div style="flex:1">${u.username}</div>
+            <div style="color:var(--yellow)">${u.points} pts</div>
+        </div>
+    `).join('');
+}
+
+async function loadSpyMode() {
+    const { data: msgs } = await sb.from('messages').select('*, sender:sender_id(username), receiver:receiver_id(username)').limit(20);
+    document.getElementById('spy-area').innerHTML = msgs.map(m => `
+        <div class="admin-spy-card">
+            <b>${m.sender?.username}</b> ➡️ <b>${m.receiver?.username}</b>: ${m.content}
+        </div>
+    `).join('');
+}
+
+async function logout() { await sb.auth.signOut(); location.reload(); }
+
+window.onload = init;
+</script>
+</body>
+</html>
