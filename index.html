@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eFootball Arena</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:100vh}
+
+/* Loading */
+#loading{position:fixed;inset:0;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
+#loading.hidden{opacity:0;pointer-events:none}
+.load-ball{font-size:50px;animation:spin 1s linear infinite;margin-bottom:15px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-logo{background:#f5c518;border-radius:12px;padding:10px 25px;margin-bottom:10px}
+.load-logo span{font-size:22px;font-weight:900;color:#000}
+.load-text{color:#64748b;font-size:13px}
+
+/* Auth */
+#auth{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.auth-box{background:#151d2e;border:1px solid #1e2d45;border-radius:16px;padding:20px;width:100%;max-width:380px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#000;font-weight:700;font-size:14px;padding:12px;border-radius:10px;border:none;cursor:pointer;width:100%;margin-bottom:12px;font-family:'Cairo'}
+.input-group{margin-bottom:10px}
+.input-label{font-size:11px;color:#64748b;margin-bottom:4px;display:block}
+.input-field{background:#1a2338;border:1px solid #1e2d45;border-radius:10px;padding:10px 13px;font-family:'Cairo';font-size:13px;color:#e2e8f0;outline:none;width:100%}
+.input-field:focus{border-color:#f5c518}
+.btn-auth{background:linear-gradient(135deg,#f5c518,#f97316);color:#000;font-weight:900;font-size:14px;padding:12px;border-radius:10px;border:none;cursor:pointer;width:100%;margin-top:8px;font-family:'Cairo'}
+.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px}
+.success-msg{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px}
+
+/* App */
+#app{display:none}
+header{background:#111827;border-bottom:1px solid #1e2d45;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.logo{font-weight:900;font-size:14px}
+.logo span{color:#f5c518}
+.user-avatar{width:32px;height:32px;background:linear-gradient(135deg,#f5c518,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#000;cursor:pointer}
+
+.tabs{display:flex;background:#111827;border-bottom:1px solid #1e2d45;overflow-x:auto}
+.tab{flex:1;min-width:60px;padding:10px 2px;text-align:center;font-size:10px;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:'Cairo'}
+.tab.active{color:#f5c518;border-bottom-color:#f5c518}
+.tab-icon{font-size:16px;display:block;margin-bottom:2px}
+
+main{padding:12px;max-width:480px;margin:0 auto}
+.section{display:none}
+.section.active{display:block}
+
+/* Cards */
+.card{background:#151d2e;border:1px solid #1e2d45;border-radius:14px;padding:14px;margin-bottom:10px}
+.card-title{font-size:13px;font-weight:700;color:#f5c518;margin-bottom:10px}
+.btn-small{background:#f5c518;color:#000;font-weight:700;font-size:12px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo'}
+.btn-red{background:rgba(239,68,68,.15);color:#ef4444;font-weight:700;font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid #ef4444;cursor:pointer;font-family:'Cairo'}
+
+/* Stats */
+.stats-grid{display:grid;grid-template:1fr 1fr;gap:10px}
+.stat-box{background:#151d2e;border:1px solid #1e2d45;border-radius:12px;padding:14px;text-align:center}
+.stat-num{font-size:24px;font-weight:900;margin-bottom:3px}
+.stat-label{font-size:11px;color:#64748b}
+
+/* Admin */
+.admin-badge{background:linear-gradient(135deg,#b91c1c,#ef4444);color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;display:inline-block;margin-bottom:10px}
+
+/* Toast */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;font-size:12px;font-weight:700;padding:10px 20px;border-radius:10px;z-index:9000;display:none}
+.toast.error{background:#ef4444}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="load-ball">⚽</div>
+  <div class="load-logo"><span>eFootball Arena</span></div>
+  <div class="load-text">جاري التحميل...</div>
+</div>
+
+<!-- AUTH -->
+<div id="auth">
+  <div style="text-align:center;margin-bottom:20px">
+    <div class="load-logo" style="display:inline-block;margin-bottom:8px"><span>eFootball Arena</span></div>
+    <div style="color:#64748b;font-size:13px">🌍 منصة eFootball العالمية</div>
+  </div>
+
+  <div class="auth-box">
+    <button class="btn-google" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      الدخول مع Google
+    </button>
+
+    <div style="text-align:center;color:#64748b;font-size:12px;margin:12px 0">أو</div>
+
+    <div class="error-msg" id="login-error"></div>
+    <div class="input-group">
+      <label class="input-label">📧 الإيميل</label>
+      <input class="input-field" type="email" id="login-email" placeholder="example@gmail.com" dir="ltr">
+    </div>
+    <div class="input-group">
+      <label class="input-label">🔒 الباسورد</label>
+      <input class="input-field" type="password" id="login-pass" placeholder="••••••••" dir="ltr">
+    </div>
+    <button class="btn-auth" onclick="loginEmail()">دخول 🚪</button>
+
+    <div style="text-align:center;color:#64748b;font-size:12px;margin:15px 0">ما عندكش حساب؟</div>
+
+    <div class="success-msg" id="reg-success"></div>
+    <div class="error-msg" id="reg-error"></div>
+    <div class="input-group">
+      <label class="input-label">👤 اسم اللاعب</label>
+      <input class="input-field" type="text" id="reg-name" placeholder="Rayen_Player">
+    </div>
+    <div class="input-group">
+      <label class="input-label">📧 الإيميل</label>
+      <input class="input-field" type="email" id="reg-email" placeholder="example@gmail.com" dir="ltr">
+    </div>
+    <div class="input-group">
+      <label class="input-label">🔒 الباسورد</label>
+      <input class="input-field" type="password" id="reg-pass" placeholder="••••••••" dir="ltr">
+    </div>
+    <div class="input-group">
+      <label class="input-label">🔒 تأكيد الباسورد</label>
+      <input class="input-field" type="password" id="reg-pass2" placeholder="••••••••" dir="ltr">
+    </div>
+    <button class="btn-auth" onclick="register()" style="background:#22c55e">إنشاء حساب ✅</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="logo">e<span>Football</span> Arena</div>
+    <div class="user-avatar" id="avatar" onclick="showTab('stats')">👤</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('home')"><span class="tab-icon">🏠</span>الرئيسية</button>
+    <button class="tab" onclick="showTab('tournaments')"><span class="tab-icon">🏆</span>البطولات</button>
+    <button class="tab" onclick="showTab('stats')"><span class="tab-icon">👤</span>بروفايل</button>
+    <button class="tab" id="admin-tab" onclick="showTab('admin')" style="display:none"><span class="tab-icon">👑</span>Admin</button>
+  </div>
+
+  <main>
+    <!-- HOME -->
+    <div class="section active" id="sec-home">
+      <div class="card" style="background:linear-gradient(135deg,#16a34a,#22c55e);cursor:pointer" onclick="showTab('tournaments')">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:15px;font-weight:700">🏆 جاهز للمنافسة؟</div><div style="font-size:12px;opacity:.9">سجّل في البطولة الرسمية</div></div>
+          <div style="font-size:30px">⚽</div>
+        </div>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#6d28d9,#7c3aed);cursor:pointer" onclick="showTab('stats')">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:15px;font-weight:700">📊 بروفايلك</div><div style="font-size:12px;opacity:.9">شوف إحصائياتك</div></div>
+          <div style="font-size:30px">👤</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOURNAMENTS -->
+    <div class="section" id="sec-tournaments">
+      <div class="card-title">🏆 البطولات المتاحة</div>
+      <div id="tournaments-list"><div style="text-align:center;color:#64748b;padding:30px">⏳ جاري التحميل...</div></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="section" id="sec-stats">
+      <div class="card" style="text-align:center">
+        <div id="stats-avatar" style="width:70px;height:70px;background:linear-gradient(135deg,#f5c518,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#000;margin:0 auto 10px">👤</div>
+        <div id="stats-name" style="font-size:18px;font-weight:700">اسم اللاعب</div>
+        <div id="stats-email" style="font-size:12px;color:#64748b;margin-top:5px"></div>
+        <div id="stats-rank" style="font-size:16px;font-weight:900;color:#f5c518;margin-top:8px">🥉 Bronze</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-num" style="color:#22c55e" id="s-wins">0</div><div class="stat-label">فوز ✅</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#ef4444" id="s-losses">0</div><div class="stat-label">خسارة ❌</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#f5c518" id="s-points">0</div><div class="stat-label">نقاط ⭐</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#3b82f6" id="s-goals">0</div><div class="stat-label">أهداف ⚽</div></div>
+      </div>
+      <button class="btn-auth" onclick="logout()" style="background:#ef4444;margin-top:15px">🚪 خروج</button>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="section" id="sec-admin">
+      <div style="text-align:center;margin-bottom:15px">
+        <div class="admin-badge">👑 Admin Panel</div>
+        <div style="font-size:12px;color:#64748b">صلاحيات كاملة</div>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom:15px">
+        <div class="stat-box"><div class="stat-num" style="color:#3b82f6" id="d-players">0</div><div class="stat-label">👥 لاعبين</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#f5c518" id="d-tournaments">0</div><div class="stat-label">🏆 بطولات</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">➕ إضافة بطولة</div>
+        <input class="input-field" id="t-name" placeholder="اسم البطولة (مثلاً: M22)" style="margin-bottom:8px">
+        <input class="input-field" id="t-max" type="number" placeholder="عدد اللاعبين (16)" style="margin-bottom:8px">
+        <select class="input-field" id="t-status" style="margin-bottom:10px">
+          <option value="open">🟢 مفتوح للتسجيل</option>
+          <option value="live">🔴 جارية</option>
+          <option value="soon">🟡 قريباً</option>
+        </select>
+        <button class="btn-small" onclick="addTournament()">➕ إضافة</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚙️ البطولات</div>
+        <div id="admin-tournaments"><div style="text-align:center;color:#64748b;padding:15px">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ===== CONFIG =====
+const SUPABASE_URL = 'https://hiqxyslhkjxqotjkfirr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_brBzpO6J8NdAv-zsWgV1Rw_s9BdC58Q';
+const ADMIN_EMAIL = 'rayentkd22@gmail.com';
+
+// ===== STATE =====
+let sb = null;
+let currentUser = null;
+let currentProfile = null;
+
+// ===== INIT =====
+window.addEventListener('load', () => {
+  console.log('🟡 Window loaded');
+  setTimeout(init, 500);
+});
+
+async function init() {
+  try {
+    console.log('🟡 Initializing...');
+
+    // Check Supabase library
+    if (!window.supabase) {
+      console.error('🔴 Supabase library not found!');
+      hideLoading();
+      return;
+    }
+
+    // Create client
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('🟢 Supabase client created');
+
+    // Check session
+    const { data: { session }, error } = await sb.auth.getSession();
+
+    if (error) {
+      console.error('🔴 Session error:', error);
+      hideLoading();
+      return;
+    }
+
+    if (session) {
+      console.log('🟢 Session found for:', session.user.email);
+      currentUser = session.user;
+      await loadProfile();
+      showApp();
+      hideLoading();
+      return;
+    }
+
+    console.log('🟡 No session - show auth');
+    hideLoading();
+
+    // Listen for auth changes
+    sb.auth.onAuthStateChange(async (event, session) => {
+      console.log('🟡 Auth event:', event);
+      if (session && !currentUser) {
+        currentUser = session.user;
+        await loadProfile();
+        showApp();
+      }
+    });
+
+  } catch (err) {
+    console.error('🔴 Init error:', err);
+    hideLoading();
+  }
+}
+
+function hideLoading() {
+  const el = document.getElementById('loading');
+  if (el) el.classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadTournaments();
+  loadDashboard();
+}
+
+// ===== PROFILE - THE KEY FIX =====
+async function loadProfile() {
+  if (!currentUser) return;
+
+  try {
+    console.log('🟡 Loading profile for:', currentUser.id);
+    console.log('🟡 User email:', currentUser.email);
+
+    // Try to get existing profile
+    let { data, error } = await sb
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+
+    // If no profile, create one
+    if (!data || error) {
+      console.log('🟡 No profile found, creating new...');
+
+      const { data: newProfile, error: createError } = await sb
+        .from('profiles')
+        .upsert({
+          id: currentUser.id,
+          username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'لاعب',
+          email: currentUser.email,
+          is_admin: currentUser.email === ADMIN_EMAIL,
+          wins: 0,
+          losses: 0,
+          goals: 0,
+          points: 0
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('🔴 Create profile error:', createError);
+        return;
+      }
+
+      data = newProfile;
+      console.log('🟢 Profile created');
+    }
+
+    // ALWAYS update email and is_admin (even if same)
+    console.log('🟡 Updating email and is_admin...');
+    console.log('🟡 Current email in DB:', data?.email);
+    console.log('🟡 Expected email:', currentUser.email);
+    console.log('🟡 Is admin check:', currentUser.email === ADMIN_EMAIL);
+
+    const { error: updateError } = await sb
+      .from('profiles')
+      .update({
+        email: currentUser.email,
+        is_admin: currentUser.email === ADMIN_EMAIL
+      })
+      .eq('id', currentUser.id);
+
+    if (updateError) {
+      console.error('🔴 Update error:', updateError);
+    } else {
+      console.log('🟢 Profile updated');
+    }
+
+    // Refresh data after update
+    const { data: freshData } = await sb
+      .from('profiles')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (freshData) {
+      data = freshData;
+    }
+
+    currentProfile = data;
+    console.log('🟢 Profile loaded:', data);
+    console.log('🟢 Email:', data.email);
+    console.log('🟢 Is admin:', data.is_admin);
+
+    updateUI();
+
+    // Show admin tab if admin
+    if (data.is_admin === true || data.email === ADMIN_EMAIL) {
+      console.log('🟢🟢🟢 ADMIN DETECTED - SHOWING ADMIN TAB 🟢🟢🟢');
+      document.getElementById('admin-tab').style.display = 'flex';
+    } else {
+      console.log('🟡 Not admin. is_admin:', data.is_admin, 'email:', data.email);
+    }
+
+  } catch (err) {
+    console.error('🔴 Load profile error:', err);
+  }
+}
+
+function updateUI() {
+  if (!currentProfile) return;
+
+  const pts = currentProfile.points || 0;
+  const rank = getRank(pts);
+
+  document.getElementById('avatar').textContent = (currentProfile.username || 'A')[0].toUpperCase();
+  document.getElementById('stats-avatar').textContent = (currentProfile.username || 'A')[0].toUpperCase();
+  document.getElementById('stats-name').textContent = currentProfile.username || 'اللاعب';
+  document.getElementById('stats-email').textContent = currentProfile.email || '';
+  document.getElementById('stats-rank').textContent = rank.emoji + ' ' + rank.name;
+  document.getElementById('s-wins').textContent = currentProfile.wins || 0;
+  document.getElementById('s-losses').textContent = currentProfile.losses || 0;
+  document.getElementById('s-points').textContent = pts;
+  document.getElementById('s-goals').textContent = currentProfile.goals || 0;
+}
+
+function getRank(pts) {
+  const ranks = [
+    { name: 'Bronze', emoji: '🥉', min: 0, max: 49 },
+    { name: 'Silver', emoji: '🥈', min: 50, max: 149 },
+    { name: 'Gold', emoji: '🥇', min: 150, max: 299 },
+    { name: 'Diamond', emoji: '💎', min: 300, max: 499 },
+    { name: 'Elite', emoji: '👑', min: 500, max: 999 },
+    { name: 'Legend', emoji: '✨', min: 1000, max: 99999 }
+  ];
+  return ranks.find(r => pts >= r.min && pts <= r.max) || ranks[0];
+}
+
+// ===== AUTH =====
+async function loginGoogle() {
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/' }
+    });
+    if (error) {
+      console.error('🔴 Google error:', error);
+      showToast('❌ ' + error.message, true);
+    }
+  } catch (err) {
+    console.error('🔴 Google exception:', err);
+    showToast('❌ خطأ', true);
+  }
+}
+
+async function loginEmail() {
+  try {
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value;
+
+    if (!email || !pass) {
+      showError('login-error', '⚠️ أكمل الحقول');
+      return;
+    }
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+    if (error) {
+      console.error('🔴 Login error:', error);
+      showError('login-error', '⚠️ الإيميل أو الباسورد غلط');
+      return;
+    }
+
+    currentUser = data.user;
+    console.log('🟢 Logged in:', currentUser.email);
+    await loadProfile();
+    showApp();
+    showToast('✅ تم تسجيل الدخول!');
+
+  } catch (err) {
+    console.error('🔴 Login exception:', err);
+    showError('login-error', '❌ خطأ: ' + err.message);
+  }
+}
+
+async function register() {
+  try {
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass = document.getElementById('reg-pass').value;
+    const pass2 = document.getElementById('reg-pass2').value;
+
+    if (!name || !email || !pass) {
+      showError('reg-error', '⚠️ أكمل الحقول');
+      return;
+    }
+    if (pass !== pass2) {
+      showError('reg-error', '⚠️ الباسورد غير متطابق');
+      return;
+    }
+    if (pass.length < 6) {
+      showError('reg-error', '⚠️ الباسورد قصير');
+      return;
+    }
+
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { username: name } }
+    });
+
+    if (error) {
+      console.error('🔴 Register error:', error);
+      showError('reg-error', '⚠️ ' + error.message);
+      return;
+    }
+
+    // Create profile immediately
+    if (data.user) {
+      console.log('🟢 Creating profile for:', email);
+      await sb.from('profiles').upsert({
+        id: data.user.id,
+        username: name,
+        email: email,
+        is_admin: email === ADMIN_EMAIL,
+        wins: 0,
+        losses: 0,
+        goals: 0,
+        points: 0
+      });
+    }
+
+    showSuccess('reg-success', '✅ تم إنشاء الحساب!');
+
+    if (data.session) {
+      currentUser = data.user;
+      await loadProfile();
+      showApp();
+      showToast('✅ تم الدخول تلقائياً!');
+    }
+
+  } catch (err) {
+    console.error('🔴 Register exception:', err);
+    showError('reg-error', '❌ خطأ: ' + err.message);
+  }
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentProfile = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth').style.display = 'flex';
+  document.getElementById('admin-tab').style.display = 'none';
+}
+
+// ===== UI =====
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+  const sec = document.getElementById('sec-' + name);
+  if (sec) sec.classList.add('active');
+
+  const tabs = ['home', 'tournaments', 'stats', 'admin'];
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) {
+    const tabEls = document.querySelectorAll('.tab');
+    if (tabEls[idx]) tabEls[idx].classList.add('active');
+  }
+
+  if (name === 'admin') loadDashboard();
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function showSuccess(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// ===== TOURNAMENTS =====
+async function loadTournaments() {
+  try {
+    const { data } = await sb.from('tournaments').select('*').order('created_at', { ascending: false });
+    const el = document.getElementById('tournaments-list');
+
+    if (!data || !data.length) {
+      el.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px">لا بطولات بعد 🏆</div>';
+      return;
+    }
+
+    el.innerHTML = data.map(t => {
+      const statusLabels = { open: '🟢 مفتوح', live: '🔴 جارية', soon: '🟡 قريباً' };
+      const pct = Math.round((t.current_players / t.max_players) * 100);
+      return `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div>
+              <div style="font-size:15px;font-weight:700">${t.name}</div>
+              <div style="font-size:11px;color:#64748b">👥 ${t.current_players}/${t.max_players} لاعب</div>
+            </div>
+            <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid #22c55e">${statusLabels[t.status] || t.status}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:4px;height:5px;margin-bottom:10px;overflow:hidden">
+            <div style="height:100%;border-radius:4px;background:linear-gradient(90deg,#f5c518,#f97316);width:${pct}%"></div>
+          </div>
+          ${t.status === 'open' ? `<button class="btn-small" onclick="joinTournament('${t.id}')">سجّل الآن 🏆</button>` : '<button class="btn-small" style="background:#64748b;cursor:default" disabled>غير متاح ⏳</button>'}
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('🔴 Load tournaments error:', err);
+  }
+}
+
+async function joinTournament(tId) {
+  try {
+    if (!currentUser) {
+      showToast('❌ سجل دخول أولاً', true);
+      return;
+    }
+
+    const { data: existing } = await sb
+      .from('tournament_registrations')
+      .select('*')
+      .eq('tournament_id', tId)
+      .eq('player_id', currentUser.id);
+
+    if (existing && existing.length > 0) {
+      showToast('⚠️ مسجل بالفعل!', true);
+      return;
+    }
+
+    const { data: t } = await sb.from('tournaments').select('*').eq('id', tId).single();
+    if (!t) {
+      showToast('❌ البطولة غير موجودة', true);
+      return;
+    }
+    if (t.current_players >= t.max_players) {
+      showToast('⚠️ ممتلئة!', true);
+      return;
+    }
+
+    await sb.from('tournament_registrations').insert({
+      tournament_id: tId,
+      player_id: currentUser.id,
+      player_name: currentProfile?.username || 'لاعب'
+    });
+
+    await sb.from('tournaments').update({ current_players: t.current_players + 1 }).eq('id', tId);
+
+    showToast('✅ تم التسجيل!');
+    loadTournaments();
+
+  } catch (err) {
+    console.error('🔴 Join tournament error:', err);
+    showToast('❌ خطأ: ' + err.message, true);
+  }
+}
+
+// ===== ADMIN =====
+async function loadDashboard() {
+  try {
+    const [{ count: p }, { count: t }] = await Promise.all([
+      sb.from('profiles').select('*', { count: 'exact', head: true }),
+      sb.from('tournaments').select('*', { count: 'exact', head: true })
+    ]);
+    document.getElementById('d-players').textContent = p || 0;
+    document.getElementById('d-tournaments').textContent = t || 0;
+  } catch (e) {}
+
+  loadAdminTournaments();
+}
+
+async function loadAdminTournaments() {
+  try {
+    const { data } = await sb.from('tournaments').select('*').order('created_at', { ascending: false });
+    const el = document.getElementById('admin-tournaments');
+
+    if (!data || !data.length) {
+      el.innerHTML = '<div style="text-align:center;color:#64748b;padding:15px">لا بطولات</div>';
+      return;
+    }
+
+    el.innerHTML = data.map(t => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1a2338;border:1px solid #1e2d45;border-radius:10px;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:13px">${t.name}</div>
+          <div style="font-size:11px;color:#64748b">${t.current_players}/${t.max_players} • ${t.status}</div>
+        </div>
+        <button class="btn-red" onclick="deleteTournament('${t.id}', '${t.name}')">🗑 حذف</button>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error('🔴 Load admin tournaments error:', err);
+  }
+}
+
+async function addTournament() {
+  try {
+    const name = document.getElementById('t-name').value.trim();
+    const max = parseInt(document.getElementById('t-max').value) || 16;
+    const status = document.getElementById('t-status').value;
+
+    if (!name) {
+      showToast('⚠️ أدخل اسم البطولة', true);
+      return;
+    }
+
+    await sb.from('tournaments').insert({
+      name,
+      max_players: max,
+      status,
+      current_players: 0
+    });
+
+    showToast('✅ تم إضافة البطولة!');
+    document.getElementById('t-name').value = '';
+    document.getElementById('t-max').value = '';
+    loadTournaments();
+    loadDashboard();
+
+  } catch (err) {
+    console.error('🔴 Add tournament error:', err);
+    showToast('❌ خطأ: ' + err.message, true);
+  }
+}
+
+async function deleteTournament(id, name) {
+  if (!confirm(`حذف بطولة ${name}؟`)) return;
+
+  try {
+    await sb.from('tournaments').delete().eq('id', id);
+    showToast('🗑 تم الحذف!');
+    loadTournaments();
+    loadDashboard();
+  } catch (err) {
+    console.error('🔴 Delete tournament error:', err);
+    showToast('❌ خطأ', true);
+  }
+}
+</script>
+</body>
+</html>
