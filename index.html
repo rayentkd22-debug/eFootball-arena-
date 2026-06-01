@@ -2,69 +2,293 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>eFootball Arena</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Cairo',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:100vh;touch-action:manipulation}
+:root{--bg:#0a0e1a;--bg2:#111827;--card:#151d2e;--card2:#1a2338;--yellow:#f5c518;--green:#22c55e;--blue:#3b82f6;--purple:#7c3aed;--red:#ef4444;--orange:#f97316;--text:#e2e8f0;--muted:#64748b;--border:#1e2d45;--gold:#c9a84c;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-/* Loading */
-#loading{position:fixed;inset:0;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
-#loading.hidden{opacity:0;pointer-events:none}
-.load-ball{font-size:50px;animation:spin 1s linear infinite;margin-bottom:15px}
+/* LOADING */
+#loading-screen{position:fixed;inset:0;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .7s,visibility .7s;}
+#loading-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.load-ball{font-size:52px;animation:spin 1.8s linear infinite;margin-bottom:18px;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.load-logo{background:var(--yellow);border-radius:14px;padding:10px 28px;margin-bottom:8px;}
+.load-logo span{font-size:24px;font-weight:900;color:#111;letter-spacing:2px;}
+.load-sub{color:#64748b;font-size:13px;margin-bottom:38px;}
+.load-bar-wrap{width:200px;height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.load-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--yellow),#f97316);border-radius:4px;animation:loadB 2.5s ease forwards;}
+@keyframes loadB{0%{width:0%}70%{width:85%}100%{width:100%}}
+.load-txt{font-size:12px;color:#64748b;}
+
+/* TOAST */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;font-size:12px;font-weight:700;padding:10px 20px;border-radius:10px;z-index:9000;display:none;white-space:nowrap;}
+.toast.error{background:var(--red);}
+.toast.info{background:var(--blue);}
+
+/* AUTH */
+#auth-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#0d1225;position:relative;overflow:hidden;}
+#auth-screen::before{content:'';position:absolute;width:360px;height:360px;border-radius:50%;border:65px solid rgba(180,20,20,.15);top:50%;left:50%;transform:translate(-50%,-52%) rotate(-20deg);}
+#auth-screen::after{content:'';position:absolute;width:230px;height:230px;border-radius:50%;border:42px solid rgba(180,20,20,.09);top:50%;left:50%;transform:translate(-50%,-52%) rotate(10deg);}
+.auth-logo-wrap{background:var(--yellow);border-radius:14px;padding:10px 28px;margin-bottom:8px;position:relative;z-index:1;}
+.auth-logo{font-size:26px;font-weight:900;color:#111;letter-spacing:2px;}
+.auth-tagline{color:#64748b;font-size:13px;margin-bottom:20px;position:relative;z-index:1;}
+.auth-box{background:#151d2e;border:1px solid #1e2d45;border-radius:18px;padding:22px 18px;width:100%;max-width:400px;position:relative;z-index:1;}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#111;font-weight:700;font-size:14px;padding:13px;border-radius:12px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;margin-bottom:12px;}
+.security-box{background:rgba(180,20,20,.08);border:1px solid rgba(180,20,20,.3);border-radius:12px;padding:12px 14px;font-size:12px;line-height:1.7;color:#e2e8f0;margin-bottom:12px;}
+.security-box .sec-title{color:var(--yellow);font-weight:700;}
+.security-box span{color:var(--yellow);font-weight:700;}
+.auth-divider{text-align:center;color:#64748b;font-size:12px;padding:4px 0;margin:12px 0;position:relative;}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:#1e2d45;}
+.auth-divider::before{right:0;}.auth-divider::after{left:0;}
+.auth-tab-btns{display:flex;gap:8px;margin-bottom:14px;}
+.auth-tab-btn{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;border:1px solid #1e2d45;background:#1a2338;color:#64748b;transition:all .2s;}
+.auth-tab-btn.active{background:var(--yellow);color:#000;border-color:var(--yellow);}
+.input-group{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.input-label{font-size:11px;color:#64748b;}
+.input-wrap{position:relative;}
+.input-field{background:#1a2338;border:1px solid #1e2d45;border-radius:10px;padding:11px 14px;font-family:'Cairo',sans-serif;font-size:13px;color:#e2e8f0;outline:none;width:100%;transition:border-color .2s;}
+.input-field:focus{border-color:var(--yellow);}
+.input-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;cursor:pointer;}
+.btn-auth{background:linear-gradient(135deg,var(--yellow),#f97316);color:#000;font-weight:900;font-size:15px;padding:13px;border-radius:10px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;margin-top:6px;}
+.forgot-link{font-size:11px;color:#64748b;cursor:pointer;text-align:right;margin-bottom:8px;}
+.auth-form{display:none;}.auth-form.active{display:block;}
+.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px;}
+.success-msg{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px;}
+.wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;font-weight:700;font-size:14px;padding:13px 24px;border-radius:12px;text-decoration:none;width:100%;max-width:400px;margin-top:14px;position:relative;z-index:1;}
+
+/* APP */
+#app-screen{display:none;}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+.logo{font-weight:900;font-size:14px;letter-spacing:1px;}
+.logo span{color:var(--yellow);}
+.header-right{display:flex;align-items:center;gap:7px;}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:17px;position:relative;padding:3px;}
+.notif-badge{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.user-avatar{width:30px;height:30px;background:linear-gradient(135deg,var(--yellow),#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;font-weight:700;color:#000;}
+.pts-chip{background:rgba(245,197,24,.15);border:1px solid rgba(245,197,24,.3);color:var(--yellow);font-size:10px;font-weight:700;padding:3px 7px;border-radius:20px;cursor:pointer;}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:1;min-width:55px;padding:9px 2px;text-align:center;font-size:9px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .3s;white-space:nowrap;font-family:'Cairo',sans-serif;background:none;border-top:none;border-left:none;border-right:none;}
+.tab.active{color:var(--yellow);border-bottom-color:var(--yellow);}
+.tab-icon{font-size:14px;display:block;margin-bottom:1px;}
+main{padding:12px;max-width:480px;margin:0 auto;}
+.section{display:none;}
+.section.active{display:block;animation:fadeUp .35s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* DASHBOARD */
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.dash-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
+.dash-val{font-size:26px;font-weight:900;margin-bottom:4px;}
+.dash-label{font-size:11px;color:var(--muted);}
+
+/* RANK */
+.rank-card-display{background:linear-gradient(135deg,#1a1500,#2d2500);border:2px solid var(--gold);border-radius:14px;padding:16px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden;}
+.rank-card-display::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(201,168,76,.15),transparent 60%);}
+.rank-emoji{font-size:42px;margin-bottom:6px;display:block;}
+.rank-name{font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.4);letter-spacing:2px;}
+.rank-pts-needed{font-size:11px;color:var(--muted);margin-top:4px;}
+.rank-progress-bar{background:rgba(255,255,255,.08);border-radius:4px;height:5px;margin-top:8px;overflow:hidden;}
+.rank-progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),#f5c518);}
+
+/* PROMO */
+.promo-card{border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:transform .2s;}
+.promo-card:hover{transform:translateY(-2px);}
+.promo-card.green{background:linear-gradient(135deg,#16a34a,#22c55e);}
+.promo-card.teal{background:linear-gradient(135deg,#0891b2,#06b6d4);}
+.promo-card.purple{background:linear-gradient(135deg,#6d28d9,#7c3aed);}
+.promo-card.orange{background:linear-gradient(135deg,#ea580c,#f97316);}
+.promo-card.dark{background:var(--card2);border:1px solid var(--border);}
+.promo-card.dark-green{background:var(--card2);border:1px solid #166534;}
+.card-text h3{font-size:13px;font-weight:700;margin-bottom:2px;}
+.card-text p{font-size:11px;opacity:.85;}
+.card-icon{font-size:28px;background:rgba(255,255,255,.15);border-radius:10px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* SECTION */
+.section-title{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--yellow);}
+
+/* TOURNAMENT */
+.tourney-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:10px;transition:border-color .2s;}
+.tourney-card:hover{border-color:var(--yellow);}
+.tourney-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
+.tourney-name{font-size:15px;font-weight:700;}
+.tourney-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.status-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;}
+.status-open{background:rgba(34,197,94,.15);color:var(--green);border:1px solid var(--green);}
+.status-live{background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--red);}
+.status-soon{background:rgba(245,197,24,.15);color:var(--yellow);border:1px solid var(--yellow);}
+.status-finished{background:rgba(100,116,139,.15);color:var(--muted);border:1px solid var(--muted);}
+.progress-bar{background:rgba(255,255,255,.08);border-radius:4px;height:5px;margin-bottom:9px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--yellow),#f97316);}
+.tourney-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.btn-sm{font-size:11px;cursor:pointer;background:none;border:none;font-family:'Cairo',sans-serif;color:var(--muted);}
+.btn-join{background:var(--yellow);color:#000;font-weight:700;font-size:12px;padding:7px 14px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);font-weight:700;font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid var(--red);cursor:pointer;font-family:'Cairo',sans-serif;}
+.btn-warn{background:rgba(245,197,24,.15);color:var(--yellow);font-weight:700;font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid var(--yellow);cursor:pointer;font-family:'Cairo',sans-serif;}
+
+/* CLASSEMENT */
+.classement-table{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;}
+.classement-header{display:grid;grid-template-columns:28px 1fr 60px 34px 34px 44px;gap:4px;padding:9px 12px;background:rgba(245,197,24,.08);border-bottom:1px solid var(--border);font-size:10px;color:var(--muted);font-weight:700;}
+.classement-row{display:grid;grid-template-columns:28px 1fr 60px 34px 34px 44px;gap:4px;padding:9px 12px;border-bottom:1px solid var(--border);font-size:11px;align-items:center;transition:background .2s;}
+.classement-row:last-child{border-bottom:none;}
+.classement-row.me{background:rgba(245,197,24,.08);}
+.rank-num{font-weight:700;color:var(--muted);}
+.player-cell{display:flex;align-items:center;gap:5px;min-width:0;}
+.mini-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;background:linear-gradient(135deg,var(--purple),var(--blue));}
+.pts{font-weight:700;color:var(--yellow);}
+.rank-badge-sm{font-size:10px;}
+
+/* MESSAGES */
+.conv-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px;margin-bottom:8px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .2s;}
+.conv-item:hover{border-color:var(--yellow);}
+.conv-item.unread{border-right:3px solid var(--yellow);}
+.conv-avatar-wrap{position:relative;flex-shrink:0;}
+.conv-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--purple),var(--blue));}
+.online-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;background:var(--green);border-radius:50%;border:2px solid var(--card);}
+.conv-info{flex:1;min-width:0;}
+.conv-name{font-size:12px;font-weight:700;margin-bottom:2px;}
+.conv-preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-right{text-align:left;flex-shrink:0;}
+.conv-time{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.unread-dot{background:var(--yellow);color:#000;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:auto;}
+.new-msg-btn{background:var(--yellow);color:#000;font-weight:700;font-size:13px;padding:11px;border-radius:12px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;margin-bottom:10px;}
+.msg-search{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;margin-bottom:10px;outline:none;}
+
+/* CHAT */
+#chat-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column;}
+#chat-screen.open{display:flex;}
+.chat-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 12px;display:flex;align-items:center;gap:9px;}
+.back-btn{background:none;border:none;color:var(--yellow);font-size:22px;cursor:pointer;}
+.chat-user-info{flex:1;}
+.chat-user-name{font-size:13px;font-weight:700;}
+.chat-user-rank{font-size:10px;color:var(--muted);}
+.chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;}
+.msg-bubble{max-width:75%;padding:9px 12px;border-radius:14px;font-size:12px;line-height:1.5;}
+.msg-bubble.received{background:var(--card2);border:1px solid var(--border);align-self:flex-end;border-bottom-right-radius:4px;}
+.msg-bubble.sent{background:linear-gradient(135deg,#1a3a5c,#1e4a7a);border:1px solid rgba(59,130,246,.3);align-self:flex-start;border-bottom-left-radius:4px;}
+.msg-sender{font-size:10px;color:var(--yellow);margin-bottom:3px;font-weight:700;}
+.msg-time{font-size:9px;color:var(--muted);margin-top:3px;}
+.chat-input-area{background:var(--bg2);border-top:1px solid var(--border);padding:9px 11px;display:flex;gap:7px;align-items:flex-end;}
+.chat-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:9px 13px;font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);outline:none;resize:none;}
+.chat-input:focus{border-color:var(--yellow);}
+.send-btn{background:var(--yellow);color:#000;border:none;width:38px;height:38px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.wa-chat-btn{background:linear-gradient(135deg,#128c7e,#25d366);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:8px;text-decoration:none;white-space:nowrap;border:none;cursor:pointer;font-family:'Cairo',sans-serif;}
+
+/* STATS */
+.stats-profile{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;text-align:center;position:relative;}
+.edit-profile-btn{position:absolute;top:10px;left:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:4px 9px;font-size:10px;color:var(--muted);cursor:pointer;font-family:'Cairo',sans-serif;}
+.stats-avatar{width:66px;height:66px;background:linear-gradient(135deg,var(--yellow),#f97316);border-radius:50%;margin:0 auto 9px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#000;}
+.player-name{font-size:16px;font-weight:700;}
+.player-rank-display{font-size:14px;font-weight:900;margin:4px 0;}
+.player-id{color:var(--muted);font-size:11px;margin-bottom:9px;}
+.verify-badge{display:inline-block;background:rgba(34,197,94,.15);color:var(--green);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid var(--green);margin-bottom:8px;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;text-align:center;}
+.stat-val{font-size:24px;font-weight:900;margin-bottom:3px;}
+.stat-val.yellow{color:var(--yellow);}.stat-val.green{color:var(--green);}.stat-val.red{color:var(--red);}.stat-val.blue{color:var(--blue);}
+.stat-label{font-size:10px;color:var(--muted);}
+.logout-btn{background:none;border:1px solid var(--red);color:var(--red);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;padding:11px;border-radius:10px;cursor:pointer;width:100%;margin-top:11px;}
+.btn-primary{background:linear-gradient(135deg,var(--yellow),#f97316);color:#000;font-weight:700;font-size:14px;padding:11px;border-radius:10px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;margin-bottom:8px;}
+
+/* ADMIN */
+.admin-header{background:linear-gradient(135deg,#1a0a0a,#2d1010);border:1px solid rgba(239,68,68,.3);border-radius:14px;padding:14px;margin-bottom:14px;text-align:center;}
+.admin-badge-lg{background:linear-gradient(135deg,#b91c1c,#ef4444);color:#fff;font-size:13px;font-weight:700;padding:6px 18px;border-radius:20px;display:inline-block;margin-bottom:8px;}
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.admin-card-title{font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.admin-input{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;outline:none;margin-bottom:8px;}
+.admin-input:focus{border-color:var(--yellow);}
+.admin-select{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;outline:none;margin-bottom:8px;cursor:pointer;}
+.btn-admin{background:var(--yellow);color:#000;font-weight:700;font-size:13px;padding:11px;border-radius:10px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;width:100%;margin-bottom:6px;}
+.btn-admin.red{background:var(--red);color:#fff;}
+.btn-admin.blue{background:var(--blue);color:#fff;}
+.btn-admin.green{background:var(--green);color:#fff;}
+.player-row{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;}
+.player-row-info{flex:1;min-width:0;}
+.player-row-name{font-size:13px;font-weight:700;}
+.player-row-email{font-size:10px;color:var(--muted);margin-top:2px;}
+.player-row-stats{font-size:10px;color:var(--muted);margin-top:2px;}
+.player-row-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.match-score-grid{display:grid;grid-template-columns:1fr 40px 1fr;gap:8px;align-items:center;margin-bottom:8px;}
+.score-input{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;font-family:'Cairo',sans-serif;font-size:18px;font-weight:900;color:var(--yellow);text-align:center;width:100%;outline:none;}
+.match-row{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:7px;display:flex;align-items:center;gap:10px;}
+.match-teams{flex:1;font-size:12px;font-weight:700;}
+.match-score{font-size:14px;font-weight:900;color:var(--yellow);}
+.match-actions{display:flex;gap:4px;}
+
+/* REPORTS */
+.report-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;}
+.report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.report-title{font-size:13px;font-weight:700;}
+.report-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;}
+.status-pending{background:rgba(245,197,24,.15);color:var(--yellow);border:1px solid var(--yellow);}
+.status-accepted{background:rgba(34,197,94,.15);color:var(--green);border:1px solid var(--green);}
+.status-rejected{background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--red);}
+.report-body{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.report-actions{display:flex;gap:6px;}
+
+/* NOTIF */
+#notif-panel{display:none;position:fixed;inset:0;z-index:150;}
+#notif-panel.open{display:block;}
+.notif-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);}
+.notif-drawer{position:absolute;top:0;right:0;width:280px;max-width:86vw;height:100%;background:var(--bg2);border-left:1px solid var(--border);padding:16px 13px;overflow-y:auto;animation:slideIn .3s ease;}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.notif-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
+.notif-title-txt{font-size:14px;font-weight:700;}
+.close-btn{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);}
+.notif-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:7px;display:flex;gap:9px;}
+.notif-item.unread{border-right:3px solid var(--yellow);}
+.notif-icon{font-size:18px;flex-shrink:0;}
+.notif-text{font-size:11px;line-height:1.5;}
+.notif-time{font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* MODAL */
+#modal{display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center;padding:16px;}
+#modal.open{display:flex;}
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.7);}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:20px 16px;width:100%;max-width:380px;position:relative;z-index:1;animation:fadeUp .3s ease;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:14px;font-weight:700;margin-bottom:13px;}
+.modal-input{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;outline:none;margin-bottom:9px;}
+.modal-input:focus{border-color:var(--yellow);}
+.modal-select{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;outline:none;margin-bottom:9px;}
+.modal-btns{display:flex;gap:8px;}
+.btn-save{flex:1;background:var(--yellow);color:#000;font-weight:700;padding:10px;border-radius:10px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;}
+.btn-close-modal{flex:1;background:var(--card2);color:var(--muted);font-weight:700;padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-family:'Cairo',sans-serif;}
+
+/* COUNTDOWN */
+.countdown-card{background:linear-gradient(135deg,#1a1a3e,#2d1b69);border:1px solid rgba(124,58,237,.4);border-radius:16px;padding:14px;margin-bottom:12px;text-align:center;}
+.countdown-title{font-size:11px;color:#a78bfa;margin-bottom:3px;font-weight:600;}
+.countdown-tourney{font-size:14px;font-weight:900;margin-bottom:10px;color:#fff;}
+.countdown-boxes{display:flex;justify-content:center;gap:7px;}
+.cd-box{background:rgba(0,0,0,.3);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:7px 10px;min-width:50px;}
+.cd-num{font-size:22px;font-weight:900;color:var(--yellow);line-height:1;display:block;}
+.cd-label{font-size:9px;color:#a78bfa;margin-top:2px;display:block;}
+.cd-sep{font-size:20px;font-weight:900;color:rgba(124,58,237,.5);align-self:center;padding-bottom:10px;}
+
+.search-bar{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);width:100%;margin-bottom:10px;outline:none;}
+.friendly-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;text-align:center;}
+
+/* LOADING STATES */
+.loading-spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(245,197,24,.3);border-top-color:var(--yellow);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.load-logo{background:#f5c518;border-radius:12px;padding:10px 25px;margin-bottom:10px}
-.load-logo span{font-size:22px;font-weight:900;color:#000}
-.load-text{color:#64748b;font-size:13px}
+.skeleton{background:linear-gradient(90deg,var(--card2) 25%,var(--card) 50%,var(--card2) 75%);background-size:200% 100%;animation:skeleton 1.5s infinite;border-radius:8px;}
+@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* Auth */
-#auth{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.auth-box{background:#151d2e;border:1px solid #1e2d45;border-radius:16px;padding:20px;width:100%;max-width:380px}
-.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#000;font-weight:700;font-size:14px;padding:12px;border-radius:10px;border:none;width:100%;margin-bottom:12px;font-family:'Cairo'}
-.input-group{margin-bottom:10px}
-.input-label{font-size:11px;color:#64748b;margin-bottom:4px;display:block}
-.input-field{background:#1a2338;border:1px solid #1e2d45;border-radius:10px;padding:10px 13px;font-family:'Cairo';font-size:13px;color:#e2e8f0;outline:none;width:100%}
-.input-field:focus{border-color:#f5c518}
-.btn-auth{background:linear-gradient(135deg,#f5c518,#f97316);color:#000;font-weight:900;font-size:14px;padding:12px;border-radius:10px;border:none;width:100%;margin-top:8px;font-family:'Cairo'}
-.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px}
-.success-msg{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e;font-size:12px;padding:10px;border-radius:8px;display:none;margin-bottom:10px}
+/* ERROR STATES */
+.error-state{text-align:center;padding:30px;color:var(--muted);}
+.error-state .error-icon{font-size:40px;margin-bottom:10px;}
+.error-state .error-msg{font-size:13px;margin-bottom:15px;}
+.error-state .retry-btn{background:var(--yellow);color:#000;border:none;padding:8px 16px;border-radius:8px;font-family:'Cairo',sans-serif;font-weight:700;cursor:pointer;}
 
-/* App */
-#app{display:none}
-header{background:#111827;border-bottom:1px solid #1e2d45;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
-.logo{font-weight:900;font-size:14px}
-.logo span{color:#f5c518}
-.user-avatar{width:32px;height:32px;background:linear-gradient(135deg,#f5c518,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#000;cursor:pointer}
+/* EMPTY STATES */
+.empty-state{text-align:center;padding:30px;color:var(--muted);}
+.empty-state .empty-icon{font-size:40px;margin-bottom:10px;}
+.empty-state .empty-text{font-size:13px;}
 
-.tabs{display:flex;background:#111827;border-bottom:1px solid #1e2d45;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab{flex:1;min-width:60px;padding:10px 2px;text-align:center;font-size:10px;color:#64748b;cursor:pointer;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:'Cairo'}
-.tab.active{color:#f5c518;border-bottom-color:#f5c518}
-.tab-icon{font-size:16px;display:block;margin-bottom:2px}
-
-main{padding:12px;max-width:480px;margin:0 auto}
-.section{display:none}
-.section.active{display:block}
-
-/* Cards */
-.card{background:#151d2e;border:1px solid #1e2d45;border-radius:14px;padding:14px;margin-bottom:10px}
-.card-title{font-size:13px;font-weight:700;color:#f5c518;margin-bottom:10px}
-.btn-small{background:#f5c518;color:#000;font-weight:700;font-size:12px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo'}
-.btn-red{background:rgba(239,68,68,.15);color:#ef4444;font-weight:700;font-size:11px;padding:6px 12px;border-radius:8px;border:1px solid #ef4444;cursor:pointer;font-family:'Cairo'}
-
-/* Stats */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat-box{background:#151d2e;border:1px solid #1e2d45;border-radius:12px;padding:14px;text-align:center}
-.stat-num{font-size:24px;font-weight:900;margin-bottom:3px}
-.stat-label{font-size:11px;color:#64748b}
-
-/* Admin */
-.admin-badge{background:linear-gradient(135deg,#b91c1c,#ef4444);color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;display:inline-block;margin-bottom:10px}
-
-/* Toast */
-.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;font-size:12px;font-weight:700;padding:10px 20px;border-radius:10px;z-index:9000;display:none;white-space:nowrap}
-.toast.error{background:#ef4444}
+.theme-btn{font-size:16px;cursor:pointer;background:none;border:none;}
 </style>
 </head>
 <body>
@@ -72,680 +296,1564 @@ main{padding:12px;max-width:480px;margin:0 auto}
 <div class="toast" id="toast"></div>
 
 <!-- LOADING -->
-<div id="loading">
+<div id="loading-screen">
   <div class="load-ball">⚽</div>
   <div class="load-logo"><span>eFootball Arena</span></div>
-  <div class="load-text">جاري التحميل...</div>
+  <div class="load-sub">🌍 منصة eFootball العالمية</div>
+  <div class="load-bar-wrap"><div class="load-bar"></div></div>
+  <div class="load-txt" id="load-txt">جاري التحميل...</div>
 </div>
 
 <!-- AUTH -->
-<div id="auth">
-  <div style="text-align:center;margin-bottom:20px">
-    <div class="load-logo" style="display:inline-block;margin-bottom:8px"><span>eFootball Arena</span></div>
-    <div style="color:#64748b;font-size:13px">🌍 منصة eFootball العالمية</div>
-  </div>
-
+<div id="auth-screen">
+  <div class="auth-logo-wrap"><div class="auth-logo">eFootball Arena</div></div>
+  <div class="auth-tagline">🌍 منصة eFootball العالمية</div>
   <div class="auth-box">
-    <button class="btn-google" onclick="loginGoogle()">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-      الدخول مع Google
+    <button class="btn-google" onclick="loginWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      المتابعة مع Google
     </button>
-
-    <div style="text-align:center;color:#64748b;font-size:12px;margin:12px 0">أو</div>
-
-    <div class="error-msg" id="login-error"></div>
-    <div class="input-group">
-      <label class="input-label">📧 الإيميل</label>
-      <input class="input-field" type="email" id="login-email" placeholder="example@gmail.com" dir="ltr" autocomplete="email">
+    <div class="security-box">
+      <div class="sec-title">🔒 أمانك يهمنا</div>
+      eFootball Arena منصة مرافقة فقط — <span>لا نطلب كلمة مرور لعبتك</span>. بياناتك محمية تماماً.
     </div>
-    <div class="input-group">
-      <label class="input-label">🔒 الباسورد</label>
-      <input class="input-field" type="password" id="login-pass" placeholder="••••••••" dir="ltr" autocomplete="current-password">
+    <div class="auth-divider">أو بالإيميل</div>
+    <div class="auth-tab-btns">
+      <button class="auth-tab-btn active" onclick="switchTab('login',this)">تسجيل الدخول</button>
+      <button class="auth-tab-btn" onclick="switchTab('register',this)">إنشاء حساب</button>
     </div>
-    <button class="btn-auth" onclick="loginEmail()">دخول 🚪</button>
-
-    <div style="text-align:center;color:#64748b;font-size:12px;margin:15px 0">ما عندكش حساب؟</div>
-
-    <div class="success-msg" id="reg-success"></div>
-    <div class="error-msg" id="reg-error"></div>
-    <div class="input-group">
-      <label class="input-label">👤 اسم اللاعب</label>
-      <input class="input-field" type="text" id="reg-name" placeholder="Rayen_Player">
+    <div class="auth-form active" id="login-form">
+      <div class="error-msg" id="login-error"></div>
+      <div class="input-group"><label class="input-label">البريد الإلكتروني</label><div class="input-wrap"><input class="input-field" type="email" id="login-email" placeholder="example@email.com" dir="ltr" style="padding-left:36px"><span class="input-ico">✉️</span></div></div>
+      <div class="input-group"><label class="input-label">كلمة المرور</label><div class="input-wrap"><input class="input-field" type="password" id="login-pass" placeholder="••••••••" dir="ltr" style="padding-left:36px"><span class="input-ico" onclick="togglePass('login-pass')">👁️</span></div></div>
+      <div class="forgot-link" onclick="resetPassword()">نسيت كلمة السر؟</div>
+      <button class="btn-auth" onclick="doLogin()">دخول</button>
     </div>
-    <div class="input-group">
-      <label class="input-label">📧 الإيميل</label>
-      <input class="input-field" type="email" id="reg-email" placeholder="example@gmail.com" dir="ltr" autocomplete="email">
+    <div class="auth-form" id="register-form">
+      <div class="error-msg" id="reg-error"></div>
+      <div class="success-msg" id="reg-success"></div>
+      <div class="input-group"><label class="input-label">اسم اللاعب</label><input class="input-field" type="text" id="reg-name" placeholder="Ahmed_Player"></div>
+      <div class="input-group"><label class="input-label">البريد الإلكتروني</label><div class="input-wrap"><input class="input-field" type="email" id="reg-email" placeholder="example@email.com" dir="ltr" style="padding-left:36px"><span class="input-ico">✉️</span></div></div>
+      <div class="input-group"><label class="input-label">رقم واتساب (مثلاً: 21650123456)</label><div class="input-wrap"><input class="input-field" type="tel" id="reg-whatsapp" placeholder="21650123456" dir="ltr" style="padding-left:36px"><span class="input-ico">📱</span></div></div>
+      <div class="input-group"><label class="input-label">كلمة المرور</label><div class="input-wrap"><input class="input-field" type="password" id="reg-pass" placeholder="••••••••" dir="ltr" style="padding-left:36px"><span class="input-ico" onclick="togglePass('reg-pass')">👁️</span></div></div>
+      <div class="input-group"><label class="input-label">تأكيد كلمة المرور</label><input class="input-field" type="password" id="reg-pass2" placeholder="••••••••" dir="ltr"></div>
+      <button class="btn-auth" onclick="doRegister()">إنشاء حساب ✅</button>
     </div>
-    <div class="input-group">
-      <label class="input-label">🔒 الباسورد</label>
-      <input class="input-field" type="password" id="reg-pass" placeholder="••••••••" dir="ltr" autocomplete="new-password">
-    </div>
-    <div class="input-group">
-      <label class="input-label">🔒 تأكيد الباسورد</label>
-      <input class="input-field" type="password" id="reg-pass2" placeholder="••••••••" dir="ltr">
-    </div>
-    <button class="btn-auth" onclick="register()" style="background:#22c55e">إنشاء حساب ✅</button>
   </div>
+  <a href="https://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6?mode=gi_t" target="_blank" class="wa-btn">
+    <svg width="20" height="20" viewBox="0 0 32 32" fill="white"><path d="M16 0C7.163 0 0 7.163 0 16c0 2.822.736 5.472 2.027 7.776L0 32l8.463-2.004A15.94 15.94 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm8.406 22.594c-.35.984-2.04 1.88-2.812 2-.735.113-1.656.16-5.328-1.14-4.469-1.578-7.344-6.11-7.563-6.39-.219-.282-1.781-2.375-1.781-4.532 0-2.156 1.125-3.218 1.531-3.656.406-.437.89-.547 1.188-.547h.843c.297 0 .594.004.844.625.297.734 1.015 2.578 1.094 2.766.078.187.125.406.016.656-.11.25-.172.406-.344.61-.172.203-.36.453-.516.609-.172.172-.344.359-.148.703.197.344.875 1.453 1.875 2.344 1.297 1.156 2.39 1.516 2.734 1.688.344.172.547.14.75-.094.203-.234.875-1.016 1.11-1.359.234-.344.468-.297.797-.172.328.125 2.078 1.016 2.422 1.188.344.172.578.266.656.406.078.14.078.844-.28 1.828z"/></svg>
+    انضم لمجموعة واتساب الرسمية 🏆
+  </a>
 </div>
 
 <!-- APP -->
-<div id="app">
+<div id="app-screen">
   <header>
+    <div class="pts-chip" id="header-pts" onclick="showTab('stats')">🏅 0 pts</div>
     <div class="logo">e<span>Football</span> Arena</div>
-    <div class="user-avatar" id="avatar" onclick="showTab('stats')">👤</div>
+    <div class="header-right">
+      <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="icon-btn" onclick="toggleNotif()">🔔<<div class="notif-badge" id="notif-count" style="display:none">0</div></button>
+      <div class="user-avatar" id="user-avatar-btn" onclick="showTab('stats')">A</div>
+    </div>
   </header>
-
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('home')"><span class="tab-icon">🏠</span>الرئيسية</button>
+  <div class="tabs" id="tabs-bar">
+    <button class="tab active" onclick="showTab('home')"><span class="tab-icon">⊞</span>الرئيسية</button>
     <button class="tab" onclick="showTab('tournaments')"><span class="tab-icon">🏆</span>البطولات</button>
+    <button class="tab" onclick="showTab('results')"><span class="tab-icon">📋</span>النتائج</button>
+    <button class="tab" onclick="showTab('friendly')"><span class="tab-icon">⚽</span>ودية</button>
+    <button class="tab" onclick="showTab('messages')"><span class="tab-icon">💬</span>رسائل</button>
+    <button class="tab" onclick="showTab('reports')"><span class="tab-icon">🚨</span>بلاغات</button>
     <button class="tab" onclick="showTab('stats')"><span class="tab-icon">👤</span>بروفايل</button>
     <button class="tab" id="admin-tab" onclick="showTab('admin')" style="display:none"><span class="tab-icon">👑</span>Admin</button>
   </div>
-
   <main>
+
     <!-- HOME -->
     <div class="section active" id="sec-home">
-      <div class="card" style="background:linear-gradient(135deg,#16a34a,#22c55e);cursor:pointer" onclick="showTab('tournaments')">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div><div style="font-size:15px;font-weight:700">🏆 جاهز للمنافسة؟</div><div style="font-size:12px;opacity:.9">سجّل في البطولة الرسمية</div></div>
-          <div style="font-size:30px">⚽</div>
+      <div class="countdown-card">
+        <div class="countdown-title">⏳ البطولة القادمة تبدأ في</div>
+        <div class="countdown-tourney" id="cd-name">🏆 جاري التحميل...</div>
+        <div class="countdown-boxes">
+          <div class="cd-box"><span class="cd-num" id="cd-days">00</span><span class="cd-label">يوم</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-hours">00</span><span class="cd-label">ساعة</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-mins">00</span><span class="cd-label">دقيقة</span></div>
+          <div class="cd-sep">:</div>
+          <div class="cd-box"><span class="cd-num" id="cd-secs">00</span><span class="cd-label">ثانية</span></div>
         </div>
       </div>
-      <div class="card" style="background:linear-gradient(135deg,#6d28d9,#7c3aed);cursor:pointer" onclick="showTab('stats')">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div><div style="font-size:15px;font-weight:700">📊 بروفايلك</div><div style="font-size:12px;opacity:.9">شوف إحصائياتك</div></div>
-          <div style="font-size:30px">👤</div>
-        </div>
-      </div>
+      <div class="promo-card green" onclick="showTab('tournaments')"><div class="card-text"><h3>جاهز للمنافسة؟</h3><p>سجّل في البطولة الرسمية 🥇</p></div><div class="card-icon">🏆</div></div>
+      <div class="promo-card teal" onclick="showTab('friendly')"><div class="card-text"><h3>تبحث على خصم؟</h3><p>مباراة ودية فورية ⚡</p></div><div class="card-icon">⚽</div></div>
+      <div class="promo-card purple" onclick="showTab('results')"><div class="card-text"><h3>النتائج والترتيب</h3><p>Classement اللاعبين 📊</p></div><div class="card-icon">📋</div></div>
+      <div class="promo-card orange" onclick="showTab('reports')"><div class="card-text"><h3>بلاغ مباراة 🚨</h3><p>ابعث بلاغ للإدارة</p></div><div class="card-icon">🚨</div></div>
+      <div class="promo-card dark-green" onclick="window.open('https://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6?mode=gi_t','_blank')"><div class="card-text"><h3>مجموعة واتساب الرسمية</h3><p>🏆 تابع البطولات مع اللاعبين</p></div><div style="display:flex;align-items:center;gap:8px;"><button class="btn-join" onclick="event.stopPropagation();window.open('https://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6?mode=gi_t','_blank')">انضم</button><div class="card-icon" style="background:rgba(34,197,94,.15);">💬</div></div></div>
     </div>
 
     <!-- TOURNAMENTS -->
     <div class="section" id="sec-tournaments">
-      <div class="card-title">🏆 البطولات المتاحة</div>
-      <div id="tournaments-list"><div style="text-align:center;color:#64748b;padding:30px">⏳ جاري التحميل...</div></div>
+      <div class="section-title">🏆 البطولات</div>
+      <div id="tournaments-list"><div class="loading-spinner" style="margin:30px auto;display:block"></div></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="section" id="sec-results">
+      <div class="section-title">🏅 Classement</div>
+      <div class="classement-table">
+        <div class="classement-header"><span>#</span><span>اللاعب</span><span>رتبة</span><span style="text-align:center">ف</span><span style="text-align:center">خ</span><span style="text-align:center">Pts</span></div>
+        <div id="classement-body"><div class="loading-spinner" style="margin:20px auto;display:block"></div></div>
+      </div>
+      <div class="section-title">📋 آخر المباريات</div>
+      <div id="matches-list"><div class="loading-spinner" style="margin:20px auto;display:block"></div></div>
+    </div>
+
+    <!-- FRIENDLY -->
+    <div class="section" id="sec-friendly">
+      <div class="friendly-card">
+        <div style="font-size:44px;margin-bottom:10px;">⚽</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:5px;">مباراة ودية الآن؟</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:13px;">ابحث عن خصم وابدأ الفورية</div>
+        <button class="btn-primary" onclick="findOpponent()">🔍 ابحث عن خصم</button>
+      </div>
+      <input class="search-bar" type="text" placeholder="🔎 ابحث عن لاعب..." oninput="loadPlayers(this.value)">
+      <div class="section-title">لاعبون متاحون 🟢</div>
+      <div id="players-list"><div class="loading-spinner" style="margin:20px auto;display:block"></div></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="section" id="sec-messages">
+      <button class="new-msg-btn" onclick="openNewChat()">✏️ رسالة جديدة</button>
+      <input class="msg-search" type="text" placeholder="🔎 ابحث في الرسائل..." oninput="filterConversations(this.value)">
+      <div id="conversations-list"><div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">لا رسائل بعد</div></div></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="section" id="sec-reports">
+      <div class="admin-card">
+        <div class="admin-card-title">🚨 إرسال بلاغ جديد</div>
+        <input class="admin-input" id="report-opponent" placeholder="اسم الخصم">
+        <select class="admin-select" id="report-type">
+          <option value="cheat">🎮 غش في المباراة</option>
+          <option value="no_show">⏰ لم يحضر للمباراة</option>
+          <option value="wrong_score">📊 نتيجة غلط</option>
+          <option value="other">📝 سبب آخر</option>
+        </select>
+        <textarea class="admin-input" id="report-desc" placeholder="اشرح المشكلة بالتفصيل..." rows="3" style="resize:none"></textarea>
+        <button class="btn-admin" onclick="sendReport()">📤 إرسال البلاغ</button>
+      </div>
+      <div class="section-title">📋 بلاغاتي السابقة</div>
+      <div id="my-reports"><div class="empty-state"><div class="empty-icon">📝</div><div class="empty-text">لا بلاغات بعد</div></div></div>
     </div>
 
     <!-- STATS -->
     <div class="section" id="sec-stats">
-      <div class="card" style="text-align:center">
-        <div id="stats-avatar" style="width:70px;height:70px;background:linear-gradient(135deg,#f5c518,#f97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#000;margin:0 auto 10px">👤</div>
-        <div id="stats-name" style="font-size:18px;font-weight:700">اسم اللاعب</div>
-        <div id="stats-email" style="font-size:12px;color:#64748b;margin-top:5px"></div>
-        <div id="stats-rank" style="font-size:16px;font-weight:900;color:#f5c518;margin-top:8px">🥉 Bronze</div>
+      <div class="stats-profile">
+        <button class="edit-profile-btn" onclick="openEditModal()">✏️ تعديل</button>
+        <div class="stats-avatar" id="stats-avatar">A</div>
+        <div class="player-name" id="stats-name">اسم اللاعب</div>
+        <div class="player-rank-display" id="stats-rank">🥉 Bronze</div>
+        <div class="verify-badge" id="stats-verify" style="display:none">✅ موثّق</div>
+        <div class="player-id" id="stats-id">موبايل</div>
+        <div id="stats-wa" style="font-size:11px;color:var(--muted);margin-bottom:8px"></div>
       </div>
+      <div id="stats-rank-card"></div>
       <div class="stats-grid">
-        <div class="stat-box"><div class="stat-num" style="color:#22c55e" id="s-wins">0</div><div class="stat-label">فوز ✅</div></div>
-        <div class="stat-box"><div class="stat-num" style="color:#ef4444" id="s-losses">0</div><div class="stat-label">خسارة ❌</div></div>
-        <div class="stat-box"><div class="stat-num" style="color:#f5c518" id="s-points">0</div><div class="stat-label">نقاط ⭐</div></div>
-        <div class="stat-box"><div class="stat-num" style="color:#3b82f6" id="s-goals">0</div><div class="stat-label">أهداف ⚽</div></div>
+        <div class="stat-card"><div class="stat-val green" id="s-wins">0</div><div class="stat-label">فوز</div></div>
+        <div class="stat-card"><div class="stat-val red" id="s-losses">0</div><div class="stat-label">خسارة</div></div>
+        <div class="stat-card"><div class="stat-val yellow" id="s-points">0</div><div class="stat-label">نقاط</div></div>
+        <div class="stat-card"><div class="stat-val blue" id="s-goals">0</div><div class="stat-label">أهداف</div></div>
       </div>
-      <button class="btn-auth" onclick="logout()" style="background:#ef4444;margin-top:15px">🚪 خروج</button>
+      <button class="btn-primary" onclick="window.open('https://chat.whatsapp.com/CQUZiyIxktoFkfxOparUk6?mode=gi_t','_blank')">💬 انضم لمجموعة واتساب</button>
+      <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
     </div>
 
     <!-- ADMIN -->
     <div class="section" id="sec-admin">
-      <div style="text-align:center;margin-bottom:15px">
-        <div class="admin-badge">👑 Admin Panel</div>
-        <div style="font-size:12px;color:#64748b">صلاحيات كاملة</div>
+      <div class="admin-header">
+        <div class="admin-badge-lg">👑 لوحة تحكم Admin</div>
+        <div style="font-size:12px;color:var(--muted)">صلاحيات كاملة</div>
       </div>
 
-      <div class="stats-grid" style="margin-bottom:15px">
-        <div class="stat-box"><div class="stat-num" style="color:#3b82f6" id="d-players">0</div><div class="stat-label">👥 لاعبين</div></div>
-        <div class="stat-box"><div class="stat-num" style="color:#f5c518" id="d-tournaments">0</div><div class="stat-label">🏆 بطولات</div></div>
+      <div class="dashboard-grid" id="admin-dashboard">
+        <div class="dash-card"><div class="dash-val" style="color:var(--blue)" id="d-players">0</div><div class="dash-label">👥 لاعبين</div></div>
+        <div class="dash-card"><div class="dash-val" style="color:var(--yellow)" id="d-tournaments">0</div><div class="dash-label">🏆 بطولات</div></div>
+        <div class="dash-card"><div class="dash-val" style="color:var(--green)" id="d-matches">0</div><div class="dash-label">⚽ مباريات</div></div>
+        <div class="dash-card"><div class="dash-val" style="color:var(--red)" id="d-reports">0</div><div class="dash-label">🚨 بلاغات</div></div>
       </div>
 
-      <div class="card">
-        <div class="card-title">➕ إضافة بطولة</div>
-        <input class="input-field" id="t-name" placeholder="اسم البطولة (مثلاً: M22)" style="margin-bottom:8px">
-        <input class="input-field" id="t-max" type="number" placeholder="عدد اللاعبين (16)" style="margin-bottom:8px">
-        <select class="input-field" id="t-status" style="margin-bottom:10px">
-          <option value="open">🟢 مفتوح للتسجيل</option>
-          <option value="live">🔴 جارية</option>
-          <option value="soon">🟡 قريباً</option>
+      <div class="admin-card">
+        <div class="admin-card-title">📢 إرسال إشعار للجميع</div>
+        <input class="admin-input" id="notif-msg" placeholder="مثلاً: بطولة M22 تبدأ الليلة 21:00 🔥">
+        <button class="btn-admin" onclick="sendGlobalNotif()">📢 إرسال للجميع</button>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">➕ إضافة بطولة</div>
+        <input class="admin-input" id="t-name" placeholder="اسم البطولة (مثلاً: M22)">
+        <input class="admin-input" id="t-max" type="number" placeholder="عدد اللاعبين الأقصى (16)" value="16">
+        <select class="admin-select" id="t-status">
+          <option value="open">مفتوح للتسجيل</option>
+          <option value="live">جارية</option>
+          <option value="soon">قريباً</option>
+          <option value="finished">منتهية</option>
         </select>
-        <button class="btn-small" onclick="addTournament()">➕ إضافة</button>
+        <button class="btn-admin" onclick="addTournament()">➕ إضافة</button>
       </div>
 
-      <div class="card">
-        <div class="card-title">⚙️ البطولات</div>
-        <div id="admin-tournaments"><div style="text-align:center;color:#64748b;padding:15px">⏳ جاري التحميل...</div></div>
+      <div class="admin-card">
+        <div class="admin-card-title">⚙️ إدارة البطولات</div>
+        <div id="admin-tournaments-list"><div class="loading-spinner" style="margin:15px auto;display:block"></div></div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">🎯 سحب قرعة تلقائي</div>
+        <select class="admin-select" id="draw-tournament"><option value="">اختار البطولة...</option></select>
+        <button class="btn-admin blue" onclick="doDraw()">🎲 سحب القرعة</button>
+        <div id="draw-result" style="margin-top:10px"></div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">⚽ إدخال نتيجة مباراة</div>
+        <select class="admin-select" id="m-tournament"><option value="">اختار البطولة...</option></select>
+        <select class="admin-select" id="m-player1"><option value="">اللاعب 1...</option></select>
+        <select class="admin-select" id="m-player2"><option value="">اللاعب 2...</option></select>
+        <div class="match-score-grid">
+          <input class="score-input" id="m-score1" type="number" min="0" placeholder="0">
+          <div style="text-align:center;font-weight:700;color:var(--muted)">VS</div>
+          <input class="score-input" id="m-score2" type="number" min="0" placeholder="0">
+        </div>
+        <button class="btn-admin green" onclick="addMatch()">✅ حفظ النتيجة</button>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">📜 سجل المباريات</div>
+        <div id="admin-matches-list"><div class="loading-spinner" style="margin:15px auto;display:block"></div></div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">🚨 البلاغات الواردة</div>
+        <div id="admin-reports-list"><div class="loading-spinner" style="margin:15px auto;display:block"></div></div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title">👥 إدارة اللاعبين</div>
+        <input class="admin-input" id="search-players-admin" placeholder="🔎 ابحث عن لاعب..." oninput="loadAdminPlayers(this.value)">
+        <div id="admin-players-list"><div class="loading-spinner" style="margin:15px auto;display:block"></div></div>
       </div>
     </div>
+
   </main>
 </div>
 
+<!-- CHAT -->
+<div id="chat-screen">
+  <div class="chat-header">
+    <button class="back-btn" onclick="closeChat()">→</button>
+    <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0" id="chat-avatar">A</div>
+    <div class="chat-user-info" style="flex:1">
+      <div class="chat-user-name" id="chat-name">اسم اللاعب</div>
+      <div class="chat-user-rank" id="chat-rank">🥉 Bronze</div>
+    </div>
+    <a id="wa-chat-btn" href="#" target="_blank" class="wa-chat-btn" style="display:none">📱 واتساب</a>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-area">
+    <button class="send-btn" onclick="sendMsg()">↑</button>
+    <textarea class="chat-input" id="chat-input" placeholder="اكتب رسالتك..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+  </div>
+</div>
+
+<!-- NOTIF PANEL -->
+<div id="notif-panel">
+  <div class="notif-overlay" onclick="toggleNotif()"></div>
+  <div class="notif-drawer">
+    <div class="notif-header"><div class="notif-title-txt">🔔 الإشعارات</div><button class="close-btn" onclick="toggleNotif()">✕</button></div>
+    <div id="notif-list"><div class="empty-state"><div class="empty-icon">🔔</div><div class="empty-text">لا إشعارات بعد</div></div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div class="modal-overlay" onclick="closeModal()"></div>
+  <div class="modal-box" id="modal-content">
+    <div class="modal-title" id="modal-title">تعديل</div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns">
+      <button class="btn-close-modal" onclick="closeModal()">إلغاء</button>
+      <button class="btn-save" id="modal-save-btn">حفظ ✅</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ===== CONFIG =====
+// ============================================
+// CONFIGURATION
+// ============================================
 const SUPABASE_URL = 'https://hiqxyslhkjxqotjkfirr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_brBzpO6J8NdAv-zsWgV1Rw_s9BdC58Q';
 const ADMIN_EMAIL = 'rayentkd22@gmail.com';
 
-// ===== STATE =====
-let sb = null;
-let currentUser = null;
-let currentProfile = null;
+// ============================================
+// RANKS SYSTEM
+// ============================================
+const RANKS = [
+  {name:'Bronze',emoji:'🥉',min:0,max:49,color:'#cd7f32'},
+  {name:'Silver',emoji:'🥈',min:50,max:149,color:'#c0c0c0'},
+  {name:'Gold',emoji:'🥇',min:150,max:299,color:'#c9a84c'},
+  {name:'Diamond',emoji:'💎',min:300,max:499,color:'#b9f2ff'},
+  {name:'Elite',emoji:'👑',min:500,max:999,color:'#a855f7'},
+  {name:'Legend',emoji:'✨',min:1000,max:99999,color:'#c9a84c'}
+];
 
-// ===== DEBUG =====
-function debug(msg) {
-  console.log(msg);
-  // alert(msg); // Uncomment if needed for iPhone debugging
+function getRank(pts) {
+  return RANKS.find(r => pts >= r.min && pts <= r.max) || RANKS[0];
 }
 
-// ===== INIT =====
-window.addEventListener('load', function() {
-  debug('🟡 Window loaded');
-  setTimeout(init, 800);
-});
+function getRankDisplay(pts) {
+  const r = getRank(pts);
+  return `${r.emoji} ${r.name}`;
+}
 
-async function init() {
+// ============================================
+// STATE
+// ============================================
+let sb, currentUser = null, currentProfile = null, currentChat = null, isDark = true;
+
+// ============================================
+// INITIALIZATION
+// ============================================
+async function initSupabase() {
   try {
-    debug('🟡 Initializing...');
-
-    if (!window.supabase) {
-      debug('🔴 Supabase library not found!');
-      hideLoading();
-      return;
-    }
-
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    debug('🟢 Supabase client created');
-
-    const { data: { session }, error } = await sb.auth.getSession();
-
-    if (error) {
-      debug('🔴 Session error: ' + error.message);
-      hideLoading();
-      return;
-    }
-
+    
+    const { data: { session } } = await sb.auth.getSession();
     if (session) {
-      debug('🟢 Session found for: ' + session.user.email);
-      currentUser = session.user;
-      await loadProfile();
-      showApp();
+      await handleSession(session);
+    } else {
       hideLoading();
-      return;
     }
 
-    debug('🟡 No session - show auth');
-    hideLoading();
-
-    sb.auth.onAuthStateChange(async function(event, session) {
-      debug('🟡 Auth event: ' + event);
+    sb.auth.onAuthStateChange(async (event, session) => {
       if (session && !currentUser) {
-        currentUser = session.user;
-        await loadProfile();
-        showApp();
+        await handleSession(session);
       }
     });
-
   } catch (err) {
-    debug('🔴 Init error: ' + err.message);
+    console.error('Supabase init error:', err);
+    showToast('❌ خطأ في الاتصال بالخادم', true);
     hideLoading();
   }
 }
 
-function hideLoading() {
-  var el = document.getElementById('loading');
-  if (el) el.classList.add('hidden');
+async function handleSession(session) {
+  currentUser = session.user;
+  await loadProfile();
+  showApp();
+  hideLoading();
 }
 
-function showApp() {
-  document.getElementById('auth').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  loadTournaments();
-  loadDashboard();
-}
-
-// ===== PROFILE =====
+// ============================================
+// PROFILE
+// ============================================
 async function loadProfile() {
-  if (!currentUser) {
-    debug('🔴 No currentUser');
-    return;
-  }
-
+  if (!currentUser) return;
+  
   try {
-    debug('🟡 Loading profile for: ' + currentUser.id);
-    debug('🟡 User email: ' + currentUser.email);
-
-    // Get profile with maybeSingle instead of single to avoid errors
-    var result = await sb
+    const { data, error } = await sb
       .from('profiles')
       .select('*')
-      .eq('id', currentUser.id);
-
-    var data = result.data && result.data[0] ? result.data[0] : null;
-    var error = result.error;
-
-    debug('🟡 Profile query result: ' + (data ? 'found' : 'not found'));
-    if (error) debug('🟡 Profile error: ' + error.message);
-
-    // If no profile, create one
-    if (!data) {
-      debug('🟡 Creating new profile...');
-
-      var insertResult = await sb
-        .from('profiles')
-        .upsert({
-          id: currentUser.id,
-          username: currentUser.user_metadata && currentUser.user_metadata.username ? currentUser.user_metadata.username : (currentUser.email ? currentUser.email.split('@')[0] : 'لاعب'),
-          email: currentUser.email,
-          is_admin: currentUser.email === ADMIN_EMAIL,
-          wins: 0,
-          losses: 0,
-          goals: 0,
-          points: 0
-        })
-        .select();
-
-      if (insertResult.error) {
-        debug('🔴 Create profile error: ' + insertResult.error.message);
-      } else {
-        data = insertResult.data && insertResult.data[0] ? insertResult.data[0] : null;
-        debug('🟢 Profile created');
-      }
-    }
-
-    // Update email and is_admin
+      .eq('id', currentUser.id)
+      .single();
+    
+    if (error) throw error;
+    
     if (data) {
-      debug('🟡 Updating profile...');
-
-      var updateResult = await sb
-        .from('profiles')
-        .update({
-          email: currentUser.email,
-          is_admin: currentUser.email === ADMIN_EMAIL
-        })
-        .eq('id', currentUser.id)
-        .select();
-
-      if (updateResult.error) {
-        debug('🔴 Update error: ' + updateResult.error.message);
-      } else {
-        data = updateResult.data && updateResult.data[0] ? updateResult.data[0] : data;
-        debug('🟢 Profile updated');
-      }
-    }
-
-    currentProfile = data;
-
-    if (data) {
-      debug('🟢 Profile loaded - email: ' + data.email + ' admin: ' + data.is_admin);
+      currentProfile = data;
       updateUI();
-
-      // Check admin
-      var isAdmin = data.is_admin === true || data.email === ADMIN_EMAIL;
-      debug('🟡 Is admin check: ' + isAdmin);
-
+      
+      const isAdmin = data.email === ADMIN_EMAIL || data.is_admin;
       if (isAdmin) {
-        debug('🟢🟢🟢 ADMIN - SHOWING TAB 🟢🟢🟢');
-        var adminTab = document.getElementById('admin-tab');
-        if (adminTab) {
-          adminTab.style.display = 'flex';
-          debug('🟢 Admin tab display set to flex');
-        } else {
-          debug('🔴 Admin tab element not found!');
-        }
-      } else {
-        debug('🟡 Not admin');
+        document.getElementById('admin-tab').style.display = 'flex';
       }
-    } else {
-      debug('🔴 No profile data after all attempts');
     }
-
   } catch (err) {
-    debug('🔴 Load profile error: ' + err.message);
+    console.error('Profile load error:', err);
+    showToast('❌ خطأ في تحميل البروفايل', true);
   }
+}
+
+function getRankCard(pts) {
+  const r = getRank(pts);
+  const next = RANKS[RANKS.indexOf(r) + 1];
+  const pct = next ? Math.round(((pts - r.min) / (r.max - r.min)) * 100) : 100;
+  
+  if (r.name === 'Legend') {
+    return `<div class="rank-card-display" style="background:linear-gradient(135deg,#1a1500,#2d2000);border-color:${r.color}">
+      <span class="rank-emoji">${r.emoji}</span>
+      <div class="rank-name" style="color:${r.color};font-size:22px;letter-spacing:3px">LEGEND</div>
+      <div class="rank-pts-needed" style="color:${r.color}">أعلى رتبة 🔥</div>
+    </div>`;
+  }
+  
+  return `<div class="rank-card-display" style="border-color:${r.color}">
+    <span class="rank-emoji">${r.emoji}</span>
+    <div class="rank-name" style="color:${r.color}">${r.name.toUpperCase()}</div>
+    <div class="rank-pts-needed">النقاط: ${pts} ${next ? `• ${r.max - pts + 1} نقطة للترقية لـ ${next.name}` : ''}</div>
+    <div class="rank-progress-bar"><div class="rank-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${r.color},${r.color}88)"></div></div>
+  </div>`;
 }
 
 function updateUI() {
   if (!currentProfile) return;
-
-  var pts = currentProfile.points || 0;
-  var rank = getRank(pts);
-
-  document.getElementById('avatar').textContent = (currentProfile.username || 'A')[0].toUpperCase();
-  document.getElementById('stats-avatar').textContent = (currentProfile.username || 'A')[0].toUpperCase();
+  
+  const av = currentProfile.username?.[0]?.toUpperCase() || 'A';
+  const pts = currentProfile.points || 0;
+  const rank = getRankDisplay(pts);
+  
+  document.getElementById('user-avatar-btn').textContent = av;
+  document.getElementById('stats-avatar').textContent = av;
   document.getElementById('stats-name').textContent = currentProfile.username || 'اللاعب';
-  document.getElementById('stats-email').textContent = currentProfile.email || '';
-  document.getElementById('stats-rank').textContent = rank.emoji + ' ' + rank.name;
+  document.getElementById('stats-rank').textContent = rank;
+  document.getElementById('stats-id').textContent = currentProfile.email || '';
+  document.getElementById('header-pts').textContent = `${getRank(pts).emoji} ${pts} pts`;
   document.getElementById('s-wins').textContent = currentProfile.wins || 0;
   document.getElementById('s-losses').textContent = currentProfile.losses || 0;
   document.getElementById('s-points').textContent = pts;
   document.getElementById('s-goals').textContent = currentProfile.goals || 0;
+  document.getElementById('stats-rank-card').innerHTML = getRankCard(pts);
+  
+  if (currentProfile.verified) {
+    document.getElementById('stats-verify').style.display = 'inline-block';
+  }
+  
+  if (currentProfile.whatsapp) {
+    document.getElementById('stats-wa').textContent = `📱 +${currentProfile.whatsapp}`;
+  }
 }
 
-function getRank(pts) {
-  if (pts >= 1000) return { name: 'Legend', emoji: '✨' };
-  if (pts >= 500) return { name: 'Elite', emoji: '👑' };
-  if (pts >= 300) return { name: 'Diamond', emoji: '💎' };
-  if (pts >= 150) return { name: 'Gold', emoji: '🥇' };
-  if (pts >= 50) return { name: 'Silver', emoji: '🥈' };
-  return { name: 'Bronze', emoji: '🥉' };
+// ============================================
+// LOADING & THEME
+// ============================================
+function hideLoading() {
+  setTimeout(() => {
+    document.getElementById('loading-screen').classList.add('hidden');
+  }, 2000);
 }
 
-// ===== AUTH =====
-async function loginGoogle() {
+function setLoadingText(text) {
+  document.getElementById('load-txt').textContent = text;
+}
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.querySelector('.theme-btn').textContent = isDark ? '🌙' : '☀️';
+}
+
+// ============================================
+// AUTH
+// ============================================
+function switchTab(tab, btn) {
+  document.querySelectorAll('.auth-tab-btn').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  document.getElementById(tab + '-form').classList.add('active');
+}
+
+function togglePass(id) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function showSuc(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function loginWithGoogle() {
   try {
-    var result = await sb.auth.signInWithOAuth({
+    const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/' }
+      options: { redirectTo: window.location.href }
     });
-    if (result.error) {
-      debug('🔴 Google error: ' + result.error.message);
-      showToast('❌ ' + result.error.message, true);
-    }
+    if (error) throw error;
   } catch (err) {
-    debug('🔴 Google exception: ' + err.message);
-    showToast('❌ خطأ', true);
+    showToast('❌ ' + err.message, true);
   }
 }
 
-async function loginEmail() {
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  
+  if (!email || !pass) {
+    return showErr('login-error', '⚠️ كمّل جميع الحقول');
+  }
+  
   try {
-    var email = document.getElementById('login-email').value.trim();
-    var pass = document.getElementById('login-pass').value;
-
-    if (!email || !pass) {
-      showError('login-error', '⚠️ أكمل الحقول');
-      return;
-    }
-
-    var result = await sb.auth.signInWithPassword({ email: email, password: pass });
-
-    if (result.error) {
-      debug('🔴 Login error: ' + result.error.message);
-      showError('login-error', '⚠️ الإيميل أو الباسورد غلط');
-      return;
-    }
-
-    currentUser = result.data.user;
-    debug('🟢 Logged in: ' + currentUser.email);
-    await loadProfile();
-    showApp();
-    showToast('✅ تم تسجيل الدخول!');
-
+    setLoadingText('جاري تسجيل الدخول...');
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
   } catch (err) {
-    debug('🔴 Login exception: ' + err.message);
-    showError('login-error', '❌ خطأ: ' + err.message);
+    showErr('login-error', '⚠️ الإيميل أو كلمة المرور غلط');
   }
 }
 
-async function register() {
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const wa = document.getElementById('reg-whatsapp').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  
+  if (!name || !email || !pass) {
+    return showErr('reg-error', '⚠️ كمّل جميع الحقول');
+  }
+  if (pass !== pass2) {
+    return showErr('reg-error', '⚠️ كلمة المرور غير متطابقة');
+  }
+  if (pass.length < 6) {
+    return showErr('reg-error', '⚠️ كلمة المرور قصيرة جداً');
+  }
+  
   try {
-    var name = document.getElementById('reg-name').value.trim();
-    var email = document.getElementById('reg-email').value.trim();
-    var pass = document.getElementById('reg-pass').value;
-    var pass2 = document.getElementById('reg-pass2').value;
-
-    if (!name || !email || !pass) {
-      showError('reg-error', '⚠️ أكمل الحقول');
-      return;
-    }
-    if (pass !== pass2) {
-      showError('reg-error', '⚠️ الباسورد غير متطابق');
-      return;
-    }
-    if (pass.length < 6) {
-      showError('reg-error', '⚠️ الباسورد قصير');
-      return;
-    }
-
-    var result = await sb.auth.signUp({
-      email: email,
+    setLoadingText('جاري إنشاء الحساب...');
+    const { error } = await sb.auth.signUp({
+      email,
       password: pass,
-      options: { data: { username: name } }
+      options: { data: { username: name, whatsapp: wa } }
     });
-
-    if (result.error) {
-      debug('🔴 Register error: ' + result.error.message);
-      showError('reg-error', '⚠️ ' + result.error.message);
-      return;
-    }
-
-    // Create profile
-    if (result.data.user) {
-      debug('🟢 Creating profile for: ' + email);
-      await sb.from('profiles').upsert({
-        id: result.data.user.id,
-        username: name,
-        email: email,
-        is_admin: email === ADMIN_EMAIL,
-        wins: 0,
-        losses: 0,
-        goals: 0,
-        points: 0
-      });
-    }
-
-    showSuccess('reg-success', '✅ تم إنشاء الحساب!');
-
-    if (result.data.session) {
-      currentUser = result.data.user;
-      await loadProfile();
-      showApp();
-      showToast('✅ تم الدخول تلقائياً!');
-    }
-
+    if (error) throw error;
+    showSuc('reg-success', '✅ تم إنشاء الحساب! تحقق من إيميلك');
   } catch (err) {
-    debug('🔴 Register exception: ' + err.message);
-    showError('reg-error', '❌ خطأ: ' + err.message);
+    showErr('reg-error', '⚠️ ' + err.message);
   }
 }
 
-async function logout() {
+async function resetPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return showErr('login-error', '⚠️ أدخل الإيميل أولاً');
+  
+  try {
+    await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+    showToast('📧 تم إرسال رابط استعادة كلمة المرور!');
+  } catch (err) {
+    showToast('❌ خطأ في الإرسال', true);
+  }
+}
+
+async function doLogout() {
   await sb.auth.signOut();
   currentUser = null;
   currentProfile = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('admin-tab').style.display = 'none';
 }
 
-// ===== UI =====
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  loadTournaments();
+  loadClassement();
+  loadPlayers();
+  loadMatches();
+  loadDashboard();
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
 function showTab(name) {
-  var sections = document.querySelectorAll('.section');
-  for (var i = 0; i < sections.length; i++) {
-    sections[i].classList.remove('active');
-  }
-
-  var tabs = document.querySelectorAll('.tab');
-  for (var i = 0; i < tabs.length; i++) {
-    tabs[i].classList.remove('active');
-  }
-
-  var sec = document.getElementById('sec-' + name);
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  
+  const sec = document.getElementById('sec-' + name);
   if (sec) sec.classList.add('active');
-
-  var tabNames = ['home', 'tournaments', 'stats', 'admin'];
-  var idx = tabNames.indexOf(name);
-  if (idx >= 0 && tabs[idx]) {
-    tabs[idx].classList.add('active');
-  }
-
-  if (name === 'admin') loadDashboard();
+  
+  const tabs = ['home', 'tournaments', 'results', 'friendly', 'messages', 'reports', 'stats', 'admin'];
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.tab')[idx]?.classList.add('active');
+  
+  if (name === 'admin') loadAdminData();
+  if (name === 'reports') loadMyReports();
+  if (name === 'messages') loadConversations();
 }
 
-function showError(id, msg) {
-  var el = document.getElementById(id);
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(function() { el.style.display = 'none'; }, 4000);
+// ============================================
+// COUNTDOWN
+// ============================================
+const cdTarget = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+function updateCountdown() {
+  const diff = cdTarget - new Date();
+  if (diff <= 0) return;
+  
+  document.getElementById('cd-days').textContent = String(Math.floor(diff / 86400000)).padStart(2, '0');
+  document.getElementById('cd-hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
+  document.getElementById('cd-mins').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+  document.getElementById('cd-secs').textContent = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
 }
 
-function showSuccess(id, msg) {
-  var el = document.getElementById(id);
-  el.textContent = msg;
-  el.style.display = 'block';
-}
+setInterval(updateCountdown, 1000);
+updateCountdown();
 
-function showToast(msg, isError) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (isError ? ' error' : '');
-  t.style.display = 'block';
-  setTimeout(function() { t.style.display = 'none'; }, 3000);
-}
-
-// ===== TOURNAMENTS =====
+// ============================================
+// TOURNAMENTS
+// ============================================
 async function loadTournaments() {
   try {
-    var result = await sb.from('tournaments').select('*').order('created_at', { ascending: false });
-    var el = document.getElementById('tournaments-list');
-
-    if (!result.data || !result.data.length) {
-      el.innerHTML = '<div style="text-align:center;color:#64748b;padding:30px">لا بطولات بعد 🏆</div>';
+    const { data, error } = await sb
+      .from('tournaments')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const el = document.getElementById('tournaments-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">لا بطولات بعد</div></div>';
       return;
     }
-
-    var html = '';
-    for (var i = 0; i < result.data.length; i++) {
-      var t = result.data[i];
-      var statusLabels = { open: '🟢 مفتوح', live: '🔴 جارية', soon: '🟡 قريباً' };
-      var pct = Math.round((t.current_players / t.max_players) * 100);
-      var btn = t.status === 'open' 
-        ? '<button class="btn-small" onclick="joinTournament('' + t.id + '')">سجّل الآن 🏆</button>'
-        : '<button class="btn-small" style="background:#64748b;cursor:default" disabled>غير متاح ⏳</button>';
-
-      html += '<div class="card">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-          '<div><div style="font-size:15px;font-weight:700">' + t.name + '</div>' +
-          '<div style="font-size:11px;color:#64748b">👥 ' + t.current_players + '/' + t.max_players + ' لاعب</div></div>' +
-          '<div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid #22c55e">' + (statusLabels[t.status] || t.status) + '</div>' +
-        '</div>' +
-        '<div style="background:rgba(255,255,255,.08);border-radius:4px;height:5px;margin-bottom:10px;overflow:hidden">' +
-          '<div style="height:100%;border-radius:4px;background:linear-gradient(90deg,#f5c518,#f97316);width:' + pct + '%"></div>' +
-        '</div>' + btn + '</div>';
-    }
-    el.innerHTML = html;
-
+    
+    const sMap = {
+      open: { label: 'التسجيل مفتوح', cls: 'status-open' },
+      live: { label: 'جارية ⏱', cls: 'status-live' },
+      soon: { label: 'قريباً', cls: 'status-soon' },
+      finished: { label: 'منتهية', cls: 'status-finished' }
+    };
+    
+    el.innerHTML = data.map(t => {
+      const s = sMap[t.status] || sMap.open;
+      const pct = Math.round((t.current_players / t.max_players) * 100);
+      return `<div class="tourney-card">
+        <div class="tourney-header"><div><div class="tourney-name">${t.name}</div><div class="tourney-meta">📱 ${t.current_players}/${t.max_players} لاعب</div></div><div class="status-badge ${s.cls}">${s.label}</div></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="tourney-footer">
+          <button class="btn-sm" onclick="showBracket('${t.id}','${t.name}')">› Bracket</button>
+          ${t.status === 'open' ? `<button class="btn-join" onclick="joinTournament('${t.id}')">سجّل</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    
+    const next = data.find(t => t.status === 'open' || t.status === 'soon');
+    if (next) document.getElementById('cd-name').textContent = '🏆 ' + next.name;
   } catch (err) {
-    debug('🔴 Load tournaments error: ' + err.message);
+    console.error('Tournaments error:', err);
+    document.getElementById('tournaments-list').innerHTML = '<div class="error-state"><div class="error-icon">⚠️</div><div class="error-msg">خطأ في تحميل البطولات</div><button class="retry-btn" onclick="loadTournaments()">إعادة المحاولة</button></div>';
   }
 }
 
-async function joinTournament(tId) {
+async function joinTournament(id) {
   try {
-    if (!currentUser) {
-      showToast('❌ سجل دخول أولاً', true);
-      return;
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('whatsapp')
+      .eq('id', currentUser.id)
+      .single();
+    
+    if (!profile?.whatsapp) {
+      const wa = prompt('⚠️ لازم تحط رقم واتساب باش تسجل!\nأدخل رقمك (مثلاً: 21650123456):');
+      if (!wa || !wa.trim()) return showToast('⚠️ التسجيل يحتاج رقم واتساب!', true);
+      await sb.from('profiles').update({ whatsapp: wa.trim() }).eq('id', currentUser.id);
     }
-
-    var existing = await sb.from('tournament_registrations').select('*').eq('tournament_id', tId).eq('player_id', currentUser.id);
-    if (existing.data && existing.data.length > 0) {
-      showToast('⚠️ مسجل بالفعل!', true);
-      return;
-    }
-
-    var t = await sb.from('tournaments').select('*').eq('id', tId).single();
-    if (!t.data) {
-      showToast('❌ البطولة غير موجودة', true);
-      return;
-    }
-    if (t.data.current_players >= t.data.max_players) {
-      showToast('⚠️ ممتلئة!', true);
-      return;
-    }
-
-    await sb.from('tournament_registrations').insert({
-      tournament_id: tId,
-      player_id: currentUser.id,
-      player_name: currentProfile && currentProfile.username ? currentProfile.username : 'لاعب'
-    });
-
-    await sb.from('tournaments').update({ current_players: t.data.current_players + 1 }).eq('id', tId);
-
-    showToast('✅ تم التسجيل!');
+    
+    const { data: t } = await sb.from('tournaments').select('*').eq('id', id).single();
+    if (t.current_players >= t.max_players) return showToast('⚠️ البطولة ممتلئة!', true);
+    
+    await sb.from('tournaments').update({ current_players: t.current_players + 1 }).eq('id', id);
+    showToast('✅ تم التسجيل في البطولة!');
     loadTournaments();
-
   } catch (err) {
-    debug('🔴 Join tournament error: ' + err.message);
-    showToast('❌ خطأ: ' + err.message, true);
+    showToast('❌ خطأ في التسجيل', true);
   }
 }
 
-// ===== ADMIN =====
+async function showBracket(tId, tName) {
+  try {
+    const { data: matches } = await sb
+      .from('matches')
+      .select('*,p1:player1_id(username),p2:player2_id(username)')
+      .eq('tournament_id', tId);
+    
+    openModal('🏆 Bracket - ' + tName, `
+      <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:12px">نتائج بطولة ${tName}</div>
+      ${matches && matches.length ? matches.map(m => `
+        <div class="match-row">
+          <div class="match-teams">${m.p1?.username || 'لاعب'} vs ${m.p2?.username || 'لاعب'}</div>
+          <div class="match-score">${m.score1} - ${m.score2}</div>
+        </div>`).join('') : '<div class="empty-state"><div class="empty-text">لا مباريات بعد</div></div>'}
+    `, null);
+  } catch (err) {
+    showToast('❌ خطأ في تحميل Bracket', true);
+  }
+}
+
+// ============================================
+// CLASSEMENT
+// ============================================
+async function loadClassement() {
+  try {
+    const { data, error } = await sb
+      .from('profiles')
+      .select('*')
+      .order('points', { ascending: false })
+      .limit(30);
+    
+    if (error) throw error;
+    
+    const el = document.getElementById('classement-body');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏅</div><div class="empty-text">لا لاعبين بعد</div></div>';
+      return;
+    }
+    
+    const icons = ['🥇', '🥈', '🥉'];
+    el.innerHTML = data.map((p, i) => {
+      const isMe = currentUser && p.id === currentUser.id;
+      const rank = getRank(p.points || 0);
+      return `<div class="classement-row${isMe ? ' me' : ''}">
+        <span class="rank-num">${icons[i] || i + 1}</span>
+        <div class="player-cell"><div class="mini-avatar">${p.username?.[0]?.toUpperCase() || 'A'}</div><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.username || 'لاعب'}${p.verified ? '✅' : ''}</span></div>
+        <span class="rank-badge-sm" style="color:${rank.color}">${rank.emoji}${rank.name}</span>
+        <span style="text-align:center;color:var(--green)">${p.wins || 0}</span>
+        <span style="text-align:center;color:var(--red)">${p.losses || 0}</span>
+        <span class="pts">${p.points || 0}</span>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Classement error:', err);
+    document.getElementById('classement-body').innerHTML = '<div class="error-state" style="grid-column:1/-1"><div class="error-icon">⚠️</div><div class="error-msg">خطأ في تحميل الترتيب</div></div>';
+  }
+}
+
+// ============================================
+// MATCHES
+// ============================================
+async function loadMatches() {
+  try {
+    const { data, error } = await sb
+      .from('matches')
+      .select('*,p1:player1_id(username),p2:player2_id(username),t:tournament_id(name)')
+      .order('played_at', { ascending: false })
+      .limit(10);
+    
+    if (error) throw error;
+    
+    const el = document.getElementById('matches-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚽</div><div class="empty-text">لا مباريات بعد</div></div>';
+      return;
+    }
+    
+    el.innerHTML = data.map(m => `
+      <div class="match-row">
+        <div class="match-teams">
+          <div style="font-size:10px;color:var(--muted)">${m.t?.name || 'ودية'}</div>
+          ${m.p1?.username || 'لاعب'} vs ${m.p2?.username || 'لاعب'}
+        </div>
+        <div class="match-score">${m.score1} - ${m.score2}</div>
+      </div>`).join('');
+  } catch (err) {
+    console.error('Matches error:', err);
+    document.getElementById('matches-list').innerHTML = '<div class="error-state"><div class="error-icon">⚠️</div><div class="error-msg">خطأ في تحميل المباريات</div></div>';
+  }
+}
+
+// ============================================
+// PLAYERS
+// ============================================
+async function loadPlayers(search = '') {
+  try {
+    let q = sb.from('profiles').select('*').neq('id', currentUser?.id || '').limit(20);
+    if (search) q = q.ilike('username', `%${search}%`);
+    
+    const { data, error } = await q;
+    if (error) throw error;
+    
+    const el = document.getElementById('players-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-text">لا لاعبين متاحين</div></div>';
+      return;
+    }
+    
+    el.innerHTML = data.map(p => {
+      const rank = getRank(p.points || 0);
+      return `<div class="tourney-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:13px">${p.username || 'لاعب'} ${p.verified ? '✅' : ''}</div>
+          <div style="font-size:10px;color:${rank.color}">${rank.emoji} ${rank.name} • ${p.points || 0} pts</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          ${p.whatsapp ? `<a href="https://wa.me/${p.whatsapp}" target="_blank" class="btn-join" style="background:linear-gradient(135deg,#128c7e,#25d366);text-decoration:none;display:flex;align-items:center">📱</a>` : ''}
+          <button class="btn-join" onclick="openChat('${p.id}','${p.username || 'لاعب'}','${p.whatsapp || ''}','${getRankDisplay(p.points || 0)}')">💬</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Players error:', err);
+    document.getElementById('players-list').innerHTML = '<div class="error-state"><div class="error-icon">⚠️</div><div class="error-msg">خطأ في تحميل اللاعبين</div></div>';
+  }
+}
+
+function findOpponent() {
+  showToast('🔍 جاري البحث عن خصم...');
+  loadPlayers();
+}
+
+// ============================================
+// MESSAGES
+// ============================================
+async function loadConversations() {
+  try {
+    const { data, error } = await sb
+      .from('messages')
+      .select('*,sender:sender_id(username),receiver:receiver_id(username)')
+      .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const el = document.getElementById('conversations-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">لا رسائل بعد</div></div>';
+      return;
+    }
+    
+    const convs = {};
+    data.forEach(m => {
+      const partnerId = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
+      const partnerName = m.sender_id === currentUser.id ? m.receiver?.username : m.sender?.username;
+      if (!convs[partnerId]) {
+        convs[partnerId] = { name: partnerName, lastMsg: m.content, time: m.created_at };
+      }
+    });
+    
+    el.innerHTML = Object.entries(convs).map(([id, conv]) => `
+      <div class="conv-item" onclick="openChat('${id}','${conv.name}','','')">
+        <div class="conv-avatar-wrap">
+          <div class="conv-avatar">${conv.name?.[0]?.toUpperCase() || 'A'}</div>
+        </div>
+        <div class="conv-info">
+          <div class="conv-name">${conv.name || 'لاعب'}</div>
+          <div class="conv-preview">${conv.lastMsg}</div>
+        </div>
+        <div class="conv-right">
+          <div class="conv-time">${new Date(conv.time).toLocaleDateString('ar')}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Conversations error:', err);
+  }
+}
+
+function filterConversations(search) {
+  loadConversations();
+}
+
+async function openChat(userId, username, whatsapp, rankDisplay) {
+  currentChat = { id: userId, name: username };
+  document.getElementById('chat-name').textContent = username;
+  document.getElementById('chat-avatar').textContent = username[0]?.toUpperCase() || 'A';
+  document.getElementById('chat-rank').textContent = rankDisplay || '';
+  
+  const waBtn = document.getElementById('wa-chat-btn');
+  if (whatsapp) {
+    waBtn.href = `https://wa.me/${whatsapp}`;
+    waBtn.style.display = 'block';
+  } else {
+    waBtn.style.display = 'none';
+  }
+  
+  document.getElementById('chat-screen').classList.add('open');
+  await loadMessages(userId);
+}
+
+async function loadMessages(otherId) {
+  try {
+    const myId = currentUser.id;
+    const { data, error } = await sb
+      .from('messages')
+      .select('*,sender:sender_id(username)')
+      .or(`and(sender_id.eq.${myId},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${myId})`)
+      .order('created_at');
+    
+    if (error) throw error;
+    
+    const c = document.getElementById('chat-messages');
+    if (!data || !data.length) {
+      c.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">ابدأ المحادثة</div></div>';
+      return;
+    }
+    
+    c.innerHTML = data.map(m => `
+      <div class="msg-bubble ${m.sender_id === myId ? 'sent' : 'received'}">
+        ${m.content}
+        <div class="msg-time">${new Date(m.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })}</div>
+      </div>`).join('');
+    
+    c.scrollTop = c.scrollHeight;
+  } catch (err) {
+    console.error('Messages error:', err);
+  }
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('chat-input');
+  const txt = inp.value.trim();
+  if (!txt || !currentChat) return;
+  
+  try {
+    const { error } = await sb.from('messages').insert({
+      sender_id: currentUser.id,
+      receiver_id: currentChat.id,
+      content: txt
+    });
+    
+    inp.value = '';
+    if (!error) await loadMessages(currentChat.id);
+  } catch (err) {
+    showToast('❌ خطأ في إرسال الرسالة', true);
+  }
+}
+
+function closeChat() {
+  document.getElementById('chat-screen').classList.remove('open');
+  currentChat = null;
+}
+
+function openNewChat() {
+  const n = prompt('اكتب اسم اللاعب:');
+  if (n) showToast('🔍 ابحث عن اللاعب في صفحة الودية');
+}
+
+// ============================================
+// REPORTS
+// ============================================
+async function sendReport() {
+  const opponent = document.getElementById('report-opponent').value.trim();
+  const type = document.getElementById('report-type').value;
+  const desc = document.getElementById('report-desc').value.trim();
+  
+  if (!opponent || !desc) return showToast('⚠️ أكمل جميع الحقول', true);
+  
+  try {
+    const { error } = await sb.from('reports').insert({
+      reporter_id: currentUser.id,
+      reporter_name: currentProfile?.username,
+      opponent_name: opponent,
+      type,
+      description: desc,
+      status: 'pending'
+    });
+    
+    if (error) throw error;
+    
+    showToast('✅ تم إرسال البلاغ!');
+    document.getElementById('report-opponent').value = '';
+    document.getElementById('report-desc').value = '';
+    loadMyReports();
+  } catch (err) {
+    showToast('❌ خطأ في الإرسال', true);
+  }
+}
+
+async function loadMyReports() {
+  try {
+    const { data, error } = await sb
+      .from('reports')
+      .select('*')
+      .eq('reporter_id', currentUser.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const el = document.getElementById('my-reports');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-text">لا بلاغات بعد</div></div>';
+      return;
+    }
+    
+    const sMap = {
+      pending: { label: 'قيد المراجعة ⏳', cls: 'status-pending' },
+      accepted: { label: 'تم القبول ✅', cls: 'status-accepted' },
+      rejected: { label: 'مرفوض ❌', cls: 'status-rejected' }
+    };
+    
+    el.innerHTML = data.map(r => {
+      const s = sMap[r.status] || sMap.pending;
+      return `<div class="report-card">
+        <div class="report-header"><div class="report-title">بلاغ ضد: ${r.opponent_name}</div><span class="report-status ${s.cls}">${s.label}</span></div>
+        <div class="report-body">${r.description}</div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Reports error:', err);
+  }
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+function toggleNotif() {
+  document.getElementById('notif-panel').classList.toggle('open');
+  if (document.getElementById('notif-panel').classList.contains('open')) {
+    loadNotifications();
+  }
+}
+
+async function loadNotifications() {
+  try {
+    const { data, error } = await sb
+      .from('notifications')
+      .select('*')
+      .or(`user_id.eq.${currentUser.id},is_global.eq.true`)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    
+    if (error) throw error;
+    
+    const el = document.getElementById('notif-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔔</div><div class="empty-text">لا إشعارات</div></div>';
+      return;
+    }
+    
+    const unread = data.filter(n => !n.read).length;
+    if (unread > 0) {
+      document.getElementById('notif-count').textContent = unread;
+      document.getElementById('notif-count').style.display = 'flex';
+    }
+    
+    el.innerHTML = data.map(n => `
+      <div class="notif-item${!n.read ? ' unread' : ''}">
+        <div class="notif-icon">${n.icon || '🔔'}</div>
+        <div><div class="notif-text">${n.message}</div><div class="notif-time">${new Date(n.created_at).toLocaleDateString('ar')}</div></div>
+      </div>`).join('');
+  } catch (err) {
+    console.error('Notifications error:', err);
+  }
+}
+
+// ============================================
+// EDIT PROFILE
+// ============================================
+function openEditModal() {
+  openModal('✏️ تعديل البروفايل', `
+    <input class="modal-input" id="edit-name" placeholder="اسم اللاعب" value="${currentProfile?.username || ''}">
+    <input class="modal-input" id="edit-whatsapp" placeholder="رقم واتساب (21650123456)" value="${currentProfile?.whatsapp || ''}">
+  `, saveProfile);
+}
+
+async function saveProfile() {
+  const name = document.getElementById('edit-name').value.trim();
+  const wa = document.getElementById('edit-whatsapp').value.trim();
+  if (!name) return;
+  
+  try {
+    await sb.from('profiles').update({ username: name, whatsapp: wa }).eq('id', currentUser.id);
+    currentProfile.username = name;
+    currentProfile.whatsapp = wa;
+    updateUI();
+    closeModal();
+    showToast('✅ تم حفظ البروفايل!');
+  } catch (err) {
+    showToast('❌ خطأ في الحفظ', true);
+  }
+}
+
+// ============================================
+// MODAL
+// ============================================
+function openModal(title, body, onSave) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  const saveBtn = document.getElementById('modal-save-btn');
+  if (onSave) {
+    saveBtn.style.display = 'block';
+    saveBtn.onclick = () => { onSave(); closeModal(); };
+  } else {
+    saveBtn.style.display = 'none';
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+// ============================================
+// ADMIN
+// ============================================
 async function loadDashboard() {
   try {
-    var players = await sb.from('profiles').select('*', { count: 'exact', head: true });
-    var tournaments = await sb.from('tournaments').select('*', { count: 'exact', head: true });
-
-    document.getElementById('d-players').textContent = players.count || 0;
-    document.getElementById('d-tournaments').textContent = tournaments.count || 0;
-
-  } catch (e) {}
-
-  loadAdminTournaments();
+    const [{ count: p }, { count: t }, { count: m }, { count: r }] = await Promise.all([
+      sb.from('profiles').select('*', { count: 'exact', head: true }),
+      sb.from('tournaments').select('*', { count: 'exact', head: true }),
+      sb.from('matches').select('*', { count: 'exact', head: true }),
+      sb.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+    ]);
+    
+    document.getElementById('d-players').textContent = p || 0;
+    document.getElementById('d-tournaments').textContent = t || 0;
+    document.getElementById('d-matches').textContent = m || 0;
+    document.getElementById('d-reports').textContent = r || 0;
+  } catch (err) {
+    console.error('Dashboard error:', err);
+  }
 }
 
-async function loadAdminTournaments() {
+async function loadAdminData() {
+  loadAdminPlayers();
+  loadAdminTournaments();
+  loadAdminMatches();
+  loadAdminReports();
+  loadAdminSelects();
+  loadDashboard();
+}
+
+async function sendGlobalNotif() {
+  const msg = document.getElementById('notif-msg').value.trim();
+  if (!msg) return showToast('⚠️ أدخل رسالة الإشعار', true);
+  
   try {
-    var result = await sb.from('tournaments').select('*').order('created_at', { ascending: false });
-    var el = document.getElementById('admin-tournaments');
-
-    if (!result.data || !result.data.length) {
-      el.innerHTML = '<div style="text-align:center;color:#64748b;padding:15px">لا بطولات</div>';
-      return;
-    }
-
-    var html = '';
-    for (var i = 0; i < result.data.length; i++) {
-      var t = result.data[i];
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1a2338;border:1px solid #1e2d45;border-radius:10px;margin-bottom:8px">' +
-        '<div><div style="font-weight:700;font-size:13px">' + t.name + '</div>' +
-        '<div style="font-size:11px;color:#64748b">' + t.current_players + '/' + t.max_players + ' • ' + t.status + '</div></div>' +
-        '<button class="btn-red" onclick="deleteTournament('' + t.id + '', '' + t.name + '')">🗑 حذف</button></div>';
-    }
-    el.innerHTML = html;
-
+    await sb.from('notifications').insert({ message: msg, is_global: true, icon: '📢', read: false });
+    document.getElementById('notif-msg').value = '';
+    showToast('✅ تم إرسال الإشعار للجميع!');
   } catch (err) {
-    debug('🔴 Load admin tournaments error: ' + err.message);
+    showToast('❌ خطأ في الإرسال', true);
   }
 }
 
 async function addTournament() {
+  const name = document.getElementById('t-name').value.trim();
+  const max = parseInt(document.getElementById('t-max').value) || 16;
+  const status = document.getElementById('t-status').value;
+  
+  if (!name) return showToast('⚠️ أدخل اسم البطولة', true);
+  
   try {
-    var name = document.getElementById('t-name').value.trim();
-    var max = parseInt(document.getElementById('t-max').value) || 16;
-    var status = document.getElementById('t-status').value;
-
-    if (!name) {
-      showToast('⚠️ أدخل اسم البطولة', true);
-      return;
-    }
-
-    await sb.from('tournaments').insert({
-      name: name,
-      max_players: max,
-      status: status,
-      current_players: 0
-    });
-
+    await sb.from('tournaments').insert({ name, max_players: max, status, current_players: 0 });
     showToast('✅ تم إضافة البطولة!');
     document.getElementById('t-name').value = '';
-    document.getElementById('t-max').value = '';
     loadTournaments();
-    loadDashboard();
-
+    loadAdminTournaments();
+    loadAdminSelects();
   } catch (err) {
-    debug('🔴 Add tournament error: ' + err.message);
-    showToast('❌ خطأ: ' + err.message, true);
+    showToast('❌ خطأ في الإضافة', true);
   }
+}
+
+async function loadAdminTournaments() {
+  try {
+    const { data, error } = await sb.from('tournaments').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    
+    const el = document.getElementById('admin-tournaments-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-text">لا بطولات</div></div>';
+      return;
+    }
+    
+    el.innerHTML = data.map(t => `
+      <div class="match-row" style="flex-wrap:wrap;gap:6px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:12px">${t.name}</div>
+          <div style="font-size:10px;color:var(--muted)">${t.current_players}/${t.max_players} • ${t.status}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn-warn" onclick="editTournament('${t.id}','${t.name}',${t.max_players},'${t.status}')">✏️</button>
+          <button class="btn-warn" onclick="toggleRegistration('${t.id}','${t.status}')">⏸</button>
+          <button class="btn-danger" onclick="deleteTournament('${t.id}','${t.name}')">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    console.error('Admin tournaments error:', err);
+  }
+}
+
+function editTournament(id, name, max, status) {
+  openModal('✏️ تعديل البطولة', `
+    <input class="modal-input" id="et-name" value="${name}" placeholder="اسم البطولة">
+    <input class="modal-input" id="et-max" type="number" value="${max}" placeholder="العدد الأقصى">
+    <select class="modal-select" id="et-status">
+      <option value="open" ${status === 'open' ? 'selected' : ''}>مفتوح</option>
+      <option value="live" ${status === 'live' ? 'selected' : ''}>جارية</option>
+      <option value="soon" ${status === 'soon' ? 'selected' : ''}>قريباً</option>
+      <option value="finished" ${status === 'finished' ? 'selected' : ''}>منتهية</option>
+    </select>
+  `, async () => {
+    const n = document.getElementById('et-name').value.trim();
+    const m = parseInt(document.getElementById('et-max').value) || 16;
+    const s = document.getElementById('et-status').value;
+    await sb.from('tournaments').update({ name: n, max_players: m, status: s }).eq('id', id);
+    showToast('✅ تم تعديل البطولة!');
+    loadTournaments();
+    loadAdminTournaments();
+  });
+}
+
+async function toggleRegistration(id, currentStatus) {
+  const newStatus = currentStatus === 'open' ? 'soon' : 'open';
+  await sb.from('tournaments').update({ status: newStatus }).eq('id', id);
+  showToast(newStatus === 'open' ? '✅ تم فتح التسجيل!' : '⏸ تم إيقاف التسجيل!');
+  loadTournaments();
+  loadAdminTournaments();
 }
 
 async function deleteTournament(id, name) {
-  if (!confirm('حذف بطولة ' + name + '؟')) return;
+  if (!confirm(`حذف بطولة ${name}؟`)) return;
+  await sb.from('tournaments').delete().eq('id', id);
+  showToast('🗑 تم حذف البطولة!');
+  loadTournaments();
+  loadAdminTournaments();
+}
 
+async function loadAdminSelects() {
+  const { data: tours } = await sb.from('tournaments').select('*');
+  const { data: players } = await sb.from('profiles').select('*');
+  
+  const tOpts = (tours || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  const pOpts = (players || []).map(p => `<option value="${p.id}">${p.username || p.email}</option>`).join('');
+  
+  document.getElementById('m-tournament').innerHTML = '<option value="">اختار البطولة...</option>' + tOpts;
+  document.getElementById('m-player1').innerHTML = '<option value="">اللاعب 1...</option>' + pOpts;
+  document.getElementById('m-player2').innerHTML = '<option value="">اللاعب 2...</option>' + pOpts;
+  document.getElementById('draw-tournament').innerHTML = '<option value="">اختار البطولة...</option>' + tOpts;
+}
+
+async function addMatch() {
+  const tId = document.getElementById('m-tournament').value;
+  const p1Id = document.getElementById('m-player1').value;
+  const p2Id = document.getElementById('m-player2').value;
+  const s1 = parseInt(document.getElementById('m-score1').value) || 0;
+  const s2 = parseInt(document.getElementById('m-score2').value) || 0;
+  
+  if (!tId || !p1Id || !p2Id) return showToast('⚠️ اختار البطولة واللاعبين', true);
+  if (p1Id === p2Id) return showToast('⚠️ اختار لاعبين مختلفين', true);
+  
   try {
-    await sb.from('tournaments').delete().eq('id', id);
-    showToast('🗑 تم الحذف!');
-    loadTournaments();
+    await sb.from('matches').insert({
+      tournament_id: tId,
+      player1_id: p1Id,
+      player2_id: p2Id,
+      score1: s1,
+      score2: s2
+    });
+    
+    const winner = s1 > s2 ? p1Id : s2 > s1 ? p2Id : null;
+    const loser = s1 > s2 ? p2Id : s2 > s1 ? p1Id : null;
+    
+    if (winner) {
+      const { data: w } = await sb.from('profiles').select('*').eq('id', winner).single();
+      if (w) await sb.from('profiles').update({
+        wins: (w.wins || 0) + 1,
+        points: (w.points || 0) + 3,
+        goals: (w.goals || 0) + Math.max(s1, s2)
+      }).eq('id', winner);
+    }
+    
+    if (loser) {
+      const { data: l } = await sb.from('profiles').select('*').eq('id', loser).single();
+      if (l) await sb.from('profiles').update({
+        losses: (l.losses || 0) + 1,
+        goals: (l.goals || 0) + Math.min(s1, s2)
+      }).eq('id', loser);
+    }
+    
+    if (s1 === s2) {
+      await sb.from('profiles').select('*').eq('id', p1Id).single().then(async ({ data: p }) => {
+        if (p) await sb.from('profiles').update({ points: (p.points || 0) + 1 }).eq('id', p1Id);
+      });
+      await sb.from('profiles').select('*').eq('id', p2Id).single().then(async ({ data: p }) => {
+        if (p) await sb.from('profiles').update({ points: (p.points || 0) + 1 }).eq('id', p2Id);
+      });
+    }
+    
+    showToast('✅ تم حفظ النتيجة وتحديث الترتيب!');
+    document.getElementById('m-score1').value = '';
+    document.getElementById('m-score2').value = '';
+    loadClassement();
+    loadMatches();
+    loadAdminMatches();
     loadDashboard();
   } catch (err) {
-    debug('🔴 Delete tournament error: ' + err.message);
-    showToast('❌ خطأ', true);
+    showToast('❌ خطأ في حفظ النتيجة', true);
   }
 }
+
+async function loadAdminMatches() {
+  try {
+    const { data, error } = await sb
+      .from('matches')
+      .select('*,p1:player1_id(username),p2:player2_id(username),t:tournament_id(name)')
+      .order('played_at', { ascending: false })
+      .limit(20);
+    
+    if (error) throw error;
+    
+    const el = document.getElementById('admin-matches-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-text">لا مباريات</div></div>';
+      return;
+    }
+    
+    el.innerHTML = data.map(m => `
+      <div class="match-row">
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--muted)">${m.t?.name || 'ودية'}</div>
+          <div style="font-size:12px;font-weight:700">${m.p1?.username || 'لاعب'} ${m.score1} - ${m.score2} ${m.p2?.username || 'لاعب'}</div>
+        </div>
+        <div class="match-actions">
+          <button class="btn-warn" onclick="editMatch('${m.id}','${m.p1?.username}','${m.p2?.username}',${m.score1},${m.score2})">✏️</button>
+          <button class="btn-danger" onclick="deleteMatch('${m.id}')">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    console.error('Admin matches error:', err);
+  }
+}
+
+function editMatch(id, p1name, p2name, s1, s2) {
+  openModal(`✏️ تعديل نتيجة: ${p1name} vs ${p2name}`, `
+    <div style="display:grid;grid-template-columns:1fr 30px 1fr;gap:8px;align-items:center;margin-bottom:10px">
+      <input class="modal-input" id="es1" type="number" value="${s1}" style="text-align:center;font-size:20px;font-weight:900">
+      <div style="text-align:center;color:var(--muted)">-</div>
+      <input class="modal-input" id="es2" type="number" value="${s2}" style="text-align:center;font-size:20px;font-weight:900">
+    </div>
+  `, async () => {
+    const ns1 = parseInt(document.getElementById('es1').value) || 0;
+    const ns2 = parseInt(document.getElementById('es2').value) || 0;
+    await sb.from('matches').update({ score1: ns1, score2: ns2 }).eq('id', id);
+    showToast('✅ تم تعديل النتيجة!');
+    loadAdminMatches();
+    loadMatches();
+  });
+}
+
+async function deleteMatch(id) {
+  if (!confirm('حذف هذه المباراة؟')) return;
+ empty-state"><div class="empty-text">لا مباريات</div></div>';
+      return;
+    }
+    
+    el.innerHTML = data.map(m => `
+      <div class="match-row">
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--muted)">${m.t?.name || 'ودية'}</div>
+          <div style="font-size:12px;font-weight:700">${m.p1?.username || 'لاعب'} ${m.score1} - ${m.score2} ${m.p2?.username || 'لاعب'}</div>
+        </div>
+        <div class="match-actions">
+          <button class="btn-warn" onclick="editMatch('${m.id}','${m.p1?.username}','${m.p2?.username}',${m.score1},${m.score2})">✏️</button>
+          <button class="btn-danger" onclick="deleteMatch('${m.id}')">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch (err) {
+    console.error('Admin matches error:', err);
+  }
+}
+
+function editMatch(id, p1name, p2name, s1, s2) {
+  openModal(`✏️ تعديل نتيجة: ${p1name} vs ${p2name}`, `
+    <div style="display:grid;grid-template-columns:1fr 30px 1fr;gap:8px;align-items:center;margin-bottom:10px">
+      <input class="modal-input" id="es1" type="number" value="${s1}" style="text-align:center;font-size:20px;font-weight:900">
+      <div style="text-align:center;color:var(--muted)">-</div>
+      <input class="modal-input" id="es2" type="number" value="${s2}" style="text-align:center;font-size:20px;font-weight:900">
+    </div>
+  `, async () => {
+    const ns1 = parseInt(document.getElementById('es1').value) || 0;
+    const ns2 = parseInt(document.getElementById('es2').value) || 0;
+    await sb.from('matches').update({ score1: ns1, score2: ns2 }).eq('id', id);
+    showToast('✅ تم تعديل النتيجة!');
+    loadAdminMatches();
+    loadMatches();
+  });
+}
+
+async function deleteMatch(id) {
+  if (!confirm('حذف هذه المباراة؟')) return;
+  await sb.from('matches').delete().eq('id', id);
+  showToast('🗑 تم حذف المباراة!');
+  loadAdminMatches();
+  loadMatches();
+}
+
+async function doDraw() {
+  const tId = document.getElementById('draw-tournament').value;
+  if (!tId) return showToast('⚠️ اختار البطولة', true);
+  
+  try {
+    const { data: players } = await sb.from('profiles').select('username').limit(16);
+    if (!players || players.length < 2) return showToast('⚠️ لا يوجد لاعبين كافيين', true);
+    
+    const shuffled = [...players].sort(() => Math.random() - .5);
+    const pairs = [];
+    for (let i = 0; i < shuffled.length - 1; i += 2) {
+      pairs.push([shuffled[i].username, shuffled[i + 1].username]);
+    }
+    
+    const el = document.getElementById('draw-result');
+    el.innerHTML = `<div class="admin-card-title" style="margin-bottom:8px">🎯 نتيجة القرعة</div>` +
+      pairs.map((p, i) => `<div class="match-row"><div style="font-size:12px;font-weight:700">مباراة ${i + 1}: ${p[0]} ⚔️ ${p[1]}</div></div>`).join('');
+    showToast('🎉 تم سحب القرعة!');
+  } catch (err) {
+    showToast('❌ خطأ في سحب القرعة', true);
+  }
+}
+
+async function loadAdminReports() {
+  try {
+    const { data, error } = await sb.from('reports').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    
+    const el = document.getElementById('admin-reports-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-text">لا بلاغات</div></div>';
+      return;
+    }
+    
+    const sMap = {
+      pending: { label: '⏳ قيد المراجعة', cls: 'status-pending' },
+      accepted: { label: '✅ مقبول', cls: 'status-accepted' },
+      rejected: { label: '❌ مرفوض', cls: 'status-rejected' }
+    };
+    
+    el.innerHTML = data.map(r => {
+      const s = sMap[r.status] || sMap.pending;
+      return `<div class="report-card">
+        <div class="report-header"><div class="report-title">${r.reporter_name || 'لاعب'} ضد ${r.opponent_name}</div><span class="report-status ${s.cls}">${s.label}</span></div>
+        <div class="report-body">${r.description}</div>
+        <div class="report-actions">
+          <button class="btn-join" style="background:var(--green)" onclick="updateReport('${r.id}','accepted')">✅ قبول</button>
+          <button class="btn-danger" onclick="updateReport('${r.id}','rejected')">❌ رفض</button>
+          <button class="btn-warn" onclick="updateReport('${r.id}','pending')">⏳ مراجعة</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Admin reports error:', err);
+  }
+}
+
+async function updateReport(id, status) {
+  await sb.from('reports').update({ status }).eq('id', id);
+  showToast('✅ تم تحديث البلاغ!');
+  loadAdminReports();
+  loadDashboard();
+}
+
+async function loadAdminPlayers(search = '') {
+  try {
+    let q = sb.from('profiles').select('*').order('points', { ascending: false });
+    if (search) q = q.ilike('username', `%${search}%`);
+    
+    const { data, error } = await q;
+    if (error) throw error;
+    
+    const el = document.getElementById('admin-players-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-text">لا لاعبين</div></div>';
+      return;
+    }
+    
+    el.innerHTML = data.map(p => {
+      const rank = getRank(p.points || 0);
+      return `<div class="player-row">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0">${p.username?.[0]?.toUpperCase() || 'A'}</div>
+        <div class="player-row-info">
+          <div class="player-row-name">${p.username || 'لاعب'} ${p.is_admin ? '👑' : ''} ${p.verified ? '✅' : ''} ${p.banned ? '🚫' : ''}</div>
+          <div class="player-row-email" style="color:${rank.color}">${rank.emoji} ${rank.name} • ${p.points || 0} pts</div>
+          <div class="player-row-email">✉️ ${p.email || '-'} • 📱 ${p.whatsapp ? `<a href="https://wa.me/${p.whatsapp}" target="_blank" style="color:var(--green)">+${p.whatsapp}</a>` : '-'}</div>
+          <div class="player-row-stats">✅ ${p.wins || 0} فوز • ❌ ${p.losses || 0} خسارة • ⚽ ${p.goals || 0} هدف</div>
+        </div>
+        <div class="player-row-actions">
+          <button class="btn-warn" onclick="editPlayer('${p.id}','${p.username || ''}',${p.wins || 0},${p.losses || 0},${p.goals || 0},${p.points || 0},'${p.rank || 'Bronze'}',${p.verified || false},${p.banned || false})">✏️ تعديل</button>
+          <button class="btn-warn" onclick="toggleAdmin('${p.id}',${p.is_admin || false})">${p.is_admin ? 'إلغاء Admin' : 'Admin'}</button>
+          <button class="btn-warn" onclick="toggleVerify('${p.id}',${p.verified || false})">${p.verified ? 'إلغاء ✅' : 'توثيق ✅'}</button>
+          <button class="btn-danger" onclick="toggleBan('${p.id}',${p.banned || false})">${p.banned ? 'رفع الحظر' : 'حظر 🚫'}</button>
+          <button class="btn-danger" onclick="resetPlayer('${p.id}','${p.username}')">تصفير</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Admin players error:', err);
+  }
+}
+
+function editPlayer(id, name, wins, losses, goals, points, rank, verified, banned) {
+  openModal(`✏️ تعديل بروفايل: ${name}`, `
+    <input class="modal-input" id="ep-name" value="${name}" placeholder="اسم اللاعب">
+    <input class="modal-input" id="ep-wins" type="number" value="${wins}" placeholder="فوز">
+    <input class="modal-input" id="ep-losses" type="number" value="${losses}" placeholder="خسارة">
+    <input class="modal-input" id="ep-goals" type="number" value="${goals}" placeholder="أهداف">
+    <input class="modal-input" id="ep-points" type="number" value="${points}" placeholder="نقاط">
+  `, async () => {
+    const updates = {
+      username: document.getElementById('ep-name').value.trim(),
+      wins: parseInt(document.getElementById('ep-wins').value) || 0,
+      losses: parseInt(document.getElementById('ep-losses').value) || 0,
+      goals: parseInt(document.getElementById('ep-goals').value) || 0,
+      points: parseInt(document.getElementById('ep-points').value) || 0,
+    };
+    await sb.from('profiles').update(updates).eq('id', id);
+    showToast('✅ تم تعديل بروفايل اللاعب!');
+    loadAdminPlayers();
+    loadClassement();
+  });
+}
+
+async function toggleAdmin(id, isAdmin) {
+  await sb.from('profiles').update({ is_admin: !isAdmin }).eq('id', id);
+  showToast(isAdmin ? '✅ تم إلغاء Admin' : '✅ تم منح Admin');
+  loadAdminPlayers();
+}
+
+async function toggleVerify(id, v) {
+  await sb.from('profiles').update({ verified: !v }).eq('id', id);
+  showToast(!v ? '✅ تم التوثيق!' : '✅ تم إلغاء التوثيق!');
+  loadAdminPlayers();
+}
+
+async function toggleBan(id, banned) {
+  await sb.from('profiles').update({ banned: !banned }).eq('id', id);
+  showToast(!banned ? '🚫 تم حظر اللاعب!' : '✅ تم رفع الحظر!');
+  loadAdminPlayers();
+}
+
+async function resetPlayer(id, name) {
+  if (!confirm(`تصفير إحصائيات ${name}؟`)) return;
+  await sb.from('profiles').update({ wins: 0, losses: 0, goals: 0, points: 0 }).eq('id', id);
+  showToast('✅ تم تصفير الإحصائيات!');
+  loadAdminPlayers();
+  loadClassement();
+}
+
+// ============================================
+// TOAST
+// ============================================
+function showToast(msg, isError = false, isInfo = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : isInfo ? ' info' : '');
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+// ============================================
+// INIT
+// ============================================
+window.addEventListener('load', () => {
+  setTimeout(() => initSupabase(), 300);
+});
 </script>
 </body>
 </html>
